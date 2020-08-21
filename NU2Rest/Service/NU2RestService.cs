@@ -28,9 +28,21 @@ namespace NU2Rest
             }
         }
 
+        private NU2RestResponseEngine responseEngine;
+        private NU2RestResponseEngine ResponseEngine 
+        {
+             get
+             {
+                 if (responseEngine == null)
+                    responseEngine = new NU2RestResponseEngine();
+                
+                return responseEngine;
+             } 
+        }
+
         public INU2RestRequest CreateRequest(string host, string path)
         {
-            INU2RestRequest request = new NU2RestRequest(host, path, HttpClient);
+            INU2RestRequest request = new NU2RestRequest(host, path, HttpClient, ResponseEngine);
             setSchemeDefault(request);
 
             return request;
@@ -38,7 +50,7 @@ namespace NU2Rest
 
         public INU2RestRequest CreateRequest(string url)
         {
-            INU2RestRequest request = new NU2RestRequest(url, HttpClient);
+            INU2RestRequest request = new NU2RestRequest(url, HttpClient, ResponseEngine);
             setSchemeDefault(request);
 
             return request;
@@ -46,7 +58,7 @@ namespace NU2Rest
 
         public INU2RestRequest CreateRequest(string host, int port, string path)
         {
-            INU2RestRequest request = new NU2RestRequest(host, port, path, HttpClient);
+            INU2RestRequest request = new NU2RestRequest(host, port, path, HttpClient, ResponseEngine);
             setSchemeDefault(request);
 
             return request;

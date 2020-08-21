@@ -24,9 +24,10 @@ namespace NU2Rest
         public int Port { get; set; }
         private string scheme = SCHEME_DEFAULT;
         private readonly HttpClient httpClient;
+        private readonly NU2RestResponseEngine responseEngine;
 
 
-        public NU2RestRequest(string url, HttpClient httpClient)
+        public NU2RestRequest(string url, HttpClient httpClient, NU2RestResponseEngine responseEngine)
         {
             Uri uri = new Uri(url);
 
@@ -36,42 +37,45 @@ namespace NU2Rest
             scheme = uri.Scheme;
 
             this.httpClient = httpClient;
+            this.responseEngine = responseEngine;
 
             Params = new Dictionary<string, string>();
             QueryParams = new Dictionary<string, string>();
         }
 
-        public NU2RestRequest(string host, string path, HttpClient httpClient)
+        public NU2RestRequest(string host, string path, HttpClient httpClient, NU2RestResponseEngine responseEngine)
         {
             Host = host;
             Path = path;
             Port = 80;
             this.httpClient = httpClient;
+            this.responseEngine = responseEngine;
             Params = new Dictionary<string, string>();
             QueryParams = new Dictionary<string, string>();
         }
 
-        public NU2RestRequest(string host, int port, string path, HttpClient httpClient)
+        public NU2RestRequest(string host, int port, string path, HttpClient httpClient, NU2RestResponseEngine responseEngine)
         {
             Host = host;
             Path = path;
             Port = port;
             this.httpClient = httpClient;
+            this.responseEngine = responseEngine;
             Params = new Dictionary<string, string>();
             QueryParams = new Dictionary<string, string>();
         }
 
         public async Task<NU2RestResponse<TResponseDataModel>> ReadAsync<TResponseDataModel>() where TResponseDataModel : new()
         {
-            Uri requestUri = GetRequestUri();
-
             NU2RestResponse<TResponseDataModel> response = default(NU2RestResponse<TResponseDataModel>);
 
             try
             {
+                Uri requestUri = GetRequestUri();
+
                 HttpResponseMessage responseMessage = await httpClient.GetAsync(requestUri);
 
-                response = await processResponseMessageAsync<TResponseDataModel>(responseMessage);
+                response = await responseEngine.ProcessMessageAsync<TResponseDataModel>(responseMessage);
             }
             catch (System.Exception)
             {
@@ -81,35 +85,7 @@ namespace NU2Rest
             return response;
         }
 
-        private async Task<NU2RestResponse<TResponseDataModel>> processResponseMessageAsync<TResponseDataModel>(HttpResponseMessage responseMessage) where TResponseDataModel : new()
-        {
-            string jsonResponseBody = await responseMessage.Content.ReadAsStringAsync();
-
-            NU2RestResponse<TResponseDataModel> response = new NU2RestResponse<TResponseDataModel>();
-
-            response.Data = ProcessData<TResponseDataModel>(jsonResponseBody);
-            response.MetaData = ProcessMetadata(responseMessage);
-
-            return response;
-        }
-
-        private TResponseDataModel ProcessData<TResponseDataModel>(string jsonResponseBody)
-        {
-            TResponseDataModel responseData = JsonConvert.DeserializeObject<TResponseDataModel>(jsonResponseBody);
-
-            return responseData;
-        }
-
-        private NU2RestResponseMetadata ProcessMetadata(HttpResponseMessage responseMessage)
-        {
-            NU2RestResponseMetadata metadata = new NU2RestResponseMetadata()
-            {
-                Headers = responseMessage.Headers.ToDictionary(x => x),
-                StatusCode = (int)responseMessage.StatusCode
-            };
-
-            return metadata;
-        }
+        
 
         public async Task<NU2RestResponse<TResponseDataModel>> CreateAsync<TRequestDataModel, TResponseDataModel>(TRequestDataModel data, JsonSerializerSettings settings = null) where TResponseDataModel : new()
         {
@@ -126,7 +102,7 @@ namespace NU2Rest
                 StringContent content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
                 HttpResponseMessage responseMessage = await httpClient.PostAsync(requestUri, content);
 
-                response = await processResponseMessageAsync<TResponseDataModel>(responseMessage);
+                response = await responseEngine.ProcessMessageAsync<TResponseDataModel>(responseMessage);
             }
             catch (System.Exception)
             {
@@ -151,7 +127,7 @@ namespace NU2Rest
                 StringContent content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
                 HttpResponseMessage responseMessage = await httpClient.PutAsync(requestUri, content);
 
-                response = await processResponseMessageAsync<TResponseDataModel>(responseMessage);
+                response = await responseEngine.ProcessMessageAsync<TResponseDataModel>(responseMessage);
             }
             catch (System.Exception)
             {
@@ -178,7 +154,7 @@ namespace NU2Rest
                 HttpResponseMessage responseMessage = await httpClient.SendAsync(requestMessage);
 
                 string jsonResponseBody = await responseMessage.Content.ReadAsStringAsync();
-                response = await processResponseMessageAsync<TResponseDataModel>(responseMessage);
+                response = await responseEngine.ProcessMessageAsync<TResponseDataModel>(responseMessage);
 
             }
             catch (System.Exception)
@@ -198,7 +174,7 @@ namespace NU2Rest
             try
             {
                 HttpResponseMessage responseMessage = await httpClient.GetAsync(requestUri);
-                response = await processResponseMessageAsync<TResponseDataModel>(responseMessage);
+                response = await responseEngine.ProcessMessageAsync<TResponseDataModel>(responseMessage);
             }
             catch (System.Exception)
             {
