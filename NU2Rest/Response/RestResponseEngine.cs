@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -11,7 +12,7 @@ namespace NU2Rest
         public async Task<RestResponse<TResponseDataModel>> ProcessMessageAsync<TResponseDataModel>(HttpResponseMessage responseMessage, HttpStatusCode expectedStatusCode) where TResponseDataModel : new()
         {
             RestResponse<TResponseDataModel> response = new RestResponse<TResponseDataModel>();
-            
+
             response.MetaData = await ProcessMetadataAsync(responseMessage);
 
             //Process response data only if the status code was the expected. Otherwise, process only metadata.
@@ -19,8 +20,33 @@ namespace NU2Rest
             {
                 response.Data = ProcessData<TResponseDataModel>(response.MetaData.JsonBody);
             }
+            else
+            {
+                ProcessResponseError(response);
+            }
 
             return response;
+        }
+
+        private void ProcessResponseError<TResponseDataModel>(RestResponse<TResponseDataModel> response) where TResponseDataModel : new()
+        {
+            HttpStatusCode responseStatusCode = (HttpStatusCode)response.MetaData.StatusCode;
+
+            switch (responseStatusCode)
+            {
+                case HttpStatusCode.Unauthorized:
+                    {
+                        throw new RestAuthenticationException("401 - Unauthorized!", response.MetaData);
+                    }
+                case HttpStatusCode.Forbidden:
+                    {
+                        throw new RestAuthenticationException("403 - Forbbiden!", response.MetaData);
+                    }
+                default:
+                    {
+                        throw new RestException($"{responseStatusCode}- An error has ocurred!", response.MetaData);
+                    }
+            }
         }
 
         private TResponseDataModel ProcessData<TResponseDataModel>(string jsonResponseBody)
@@ -36,7 +62,7 @@ namespace NU2Rest
 
             RestResponseMetadata metadata = new RestResponseMetadata()
             {
-                Headers = responseMessage.Headers.ToDictionary(x => x),
+                Headers = responseMessage.Headers.ToDictionary(x => x.Key, x => x.Value),
                 StatusCode = (int)responseMessage.StatusCode,
                 JsonBody = jsonResponseBody
             };

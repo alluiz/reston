@@ -14,8 +14,8 @@ namespace NU2Rest
     public class RestRequest : IRestRequest
     {
         private const int PORT_DEFAULT = 80;
-        //Use this if no scheme was specified
         private const string SCHEME_DEFAULT = "http";
+        private JsonSerializerSettings defaultSettings;
         private readonly HttpClient httpClient;
         private readonly RestResponseEngine responseEngine;
 
@@ -33,7 +33,18 @@ namespace NU2Rest
             Params = new Dictionary<string, string>();
             QueryParams = new Dictionary<string, string>();
             Scheme = SCHEME_DEFAULT;
+            defaultSettings = InitJsonDefaultSettings();
         }
+
+        private JsonSerializerSettings InitJsonDefaultSettings()
+        {
+            JsonSerializerSettings settings = new JsonSerializerSettings();
+            settings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+            settings.NullValueHandling = NullValueHandling.Ignore;
+
+            return settings;
+        }
+
         public RestRequest(string host, int port, string path, HttpClient httpClient, RestResponseEngine responseEngine)
         {
             Host = host;
@@ -71,135 +82,104 @@ namespace NU2Rest
             InitProperties();
         }
 
-        public async Task<RestResponse<TResponseDataModel>> ReadAsync<TResponseDataModel>(HttpStatusCode expectedStatusCode = HttpStatusCode.OK, JsonSerializerSettings settings = null) where TResponseDataModel : new()
+        public StringContent GetContentBody<TRequestDataModel>(TRequestDataModel data, JsonSerializerSettings settings)
         {
-            RestResponse<TResponseDataModel> response = null;
+            settings = CheckJsonSerializerSettings(settings);
+            string jsonBody = Newtonsoft.Json.JsonConvert.SerializeObject(data, Formatting.Indented, settings);
+            StringContent content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
 
+            return content;
+        }
+
+        public async Task<RestResponse<TResponseDataModel>> DoRequestAsync<TResponseDataModel>(Func<Uri, Task<HttpResponseMessage>> requestAsync, HttpStatusCode expectedStatusCode) where TResponseDataModel : new()
+        {
             try
             {
-
-                settings = CheckJsonSerializerSettings(settings);
-
                 Uri requestUri = GetRequestUri();
 
-                HttpResponseMessage responseMessage = await httpClient.GetAsync(requestUri);
+                HttpResponseMessage responseMessage = await requestAsync(requestUri);
 
-                response = await responseEngine.ProcessMessageAsync<TResponseDataModel>(responseMessage, expectedStatusCode: expectedStatusCode);
+                RestResponse<TResponseDataModel> response = await responseEngine
+                    .ProcessMessageAsync<TResponseDataModel>(
+                        responseMessage: responseMessage,
+                        expectedStatusCode: expectedStatusCode);
+
+                return response;
+            }
+            catch (RestException ex)
+            {
+                Console.WriteLine(ex.ToString());
+                throw;
             }
             catch (System.Exception)
             {
                 throw;
             }
+        }
 
-            return response;
+        public async Task<RestResponse<TResponseDataModel>> ReadAsync<TResponseDataModel>(HttpStatusCode expectedStatusCode = HttpStatusCode.OK) where TResponseDataModel : new()
+        {
+            return await DoRequestAsync<TResponseDataModel>(
+                async (requestUri) =>
+                {
+                    HttpResponseMessage responseMessage = await httpClient.GetAsync(requestUri);
+
+                    return responseMessage;
+                }, expectedStatusCode);
         }
 
         public async Task<RestResponse<TResponseDataModel>> CreateAsync<TRequestDataModel, TResponseDataModel>(TRequestDataModel data, HttpStatusCode expectedStatusCode = HttpStatusCode.Created, JsonSerializerSettings settings = null) where TResponseDataModel : new()
         {
-            settings = CheckJsonSerializerSettings(settings);
+            return await DoRequestAsync<TResponseDataModel>(
+                async (requestUri) =>
+                {
+                    StringContent content = GetContentBody<TRequestDataModel>(data, settings);
+                    HttpResponseMessage responseMessage = await httpClient.PostAsync(requestUri, content);
 
-            string jsonBody = Newtonsoft.Json.JsonConvert.SerializeObject(data, Formatting.Indented, settings);
-
-            Uri requestUri = GetRequestUri();
-
-            RestResponse<TResponseDataModel> response = default(RestResponse<TResponseDataModel>);
-
-            try
-            {
-                StringContent content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
-                HttpResponseMessage responseMessage = await httpClient.PostAsync(requestUri, content);
-
-                response = await responseEngine.ProcessMessageAsync<TResponseDataModel>(responseMessage, expectedStatusCode: expectedStatusCode);
-            }
-            catch (System.Exception)
-            {
-                throw;
-            }
-
-            return response;
+                    return responseMessage;
+                }, expectedStatusCode);
         }
 
         public async Task<RestResponse<TResponseDataModel>> UpdateAsync<TRequestDataModel, TResponseDataModel>(TRequestDataModel data, HttpStatusCode expectedStatusCode = HttpStatusCode.OK, JsonSerializerSettings settings = null) where TResponseDataModel : new()
         {
-            settings = CheckJsonSerializerSettings(settings);
+            return await DoRequestAsync<TResponseDataModel>(
+                async (requestUri) =>
+                {
+                    StringContent content = GetContentBody<TRequestDataModel>(data, settings);
+                    HttpResponseMessage responseMessage = await httpClient.PutAsync(requestUri, content);
 
-            string jsonBody = Newtonsoft.Json.JsonConvert.SerializeObject(data, Formatting.Indented, settings);
-
-            Uri requestUri = GetRequestUri();
-
-            RestResponse<TResponseDataModel> response = default(RestResponse<TResponseDataModel>);
-
-            try
-            {
-                StringContent content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
-                HttpResponseMessage responseMessage = await httpClient.PutAsync(requestUri, content);
-
-                response = await responseEngine.ProcessMessageAsync<TResponseDataModel>(responseMessage, expectedStatusCode: expectedStatusCode);
-            }
-            catch (System.Exception)
-            {
-                throw;
-            }
-
-            return response;
+                    return responseMessage;
+                }, expectedStatusCode);
         }
 
         public async Task<RestResponse<TResponseDataModel>> UpdatePartialAsync<TRequestDataModel, TResponseDataModel>(TRequestDataModel data, HttpStatusCode expectedStatusCode = HttpStatusCode.OK, JsonSerializerSettings settings = null) where TResponseDataModel : new()
         {
-            settings = CheckJsonSerializerSettings(settings);
+            return await DoRequestAsync<TResponseDataModel>(
+                async (requestUri) =>
+                {
+                    StringContent content = GetContentBody<TRequestDataModel>(data, settings);
+                    HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Patch, requestUri);
+                    HttpResponseMessage responseMessage = await httpClient.SendAsync(requestMessage);
 
-            string jsonRequestBody = Newtonsoft.Json.JsonConvert.SerializeObject(data, Formatting.Indented, settings);
-
-            Uri requestUri = GetRequestUri();
-
-            RestResponse<TResponseDataModel> response = default(RestResponse<TResponseDataModel>);
-
-            try
-            {
-                StringContent content = new StringContent(jsonRequestBody, Encoding.UTF8, "application/json");
-                HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Patch, requestUri);
-                HttpResponseMessage responseMessage = await httpClient.SendAsync(requestMessage);
-
-                string jsonResponseBody = await responseMessage.Content.ReadAsStringAsync();
-                response = await responseEngine.ProcessMessageAsync<TResponseDataModel>(responseMessage, expectedStatusCode: expectedStatusCode);
-
-            }
-            catch (System.Exception)
-            {
-                throw;
-            }
-
-            return response;
+                    return responseMessage;
+                }, expectedStatusCode);
         }
 
         public async Task<RestResponse<TResponseDataModel>> DestroyAsync<TResponseDataModel>(HttpStatusCode expectedStatusCode = HttpStatusCode.NoContent) where TResponseDataModel : new()
         {
-            Uri requestUri = GetRequestUri();
+           return await DoRequestAsync<TResponseDataModel>(
+                async (requestUri) =>
+                {
+                    HttpResponseMessage responseMessage = await httpClient.DeleteAsync(requestUri);
 
-            RestResponse<TResponseDataModel> response = default(RestResponse<TResponseDataModel>);
-
-            try
-            {
-                HttpResponseMessage responseMessage = await httpClient.GetAsync(requestUri);
-                response = await responseEngine.ProcessMessageAsync<TResponseDataModel>(responseMessage, expectedStatusCode: expectedStatusCode);
-            }
-            catch (System.Exception)
-            {
-                throw;
-            }
-
-            return response;
+                    return responseMessage;
+                }, expectedStatusCode);
         }
 
-        private static JsonSerializerSettings CheckJsonSerializerSettings(JsonSerializerSettings settings)
+        private JsonSerializerSettings CheckJsonSerializerSettings(JsonSerializerSettings settings)
         {
             //if null, set default camelCase
-            if (settings == null)
-            {
-                settings = new JsonSerializerSettings();
-                settings.ContractResolver = new CamelCasePropertyNamesContractResolver();
-                settings.NullValueHandling = NullValueHandling.Ignore;
-            }
+            settings = settings ?? defaultSettings;
 
             return settings;
         }
@@ -223,6 +203,7 @@ namespace NU2Rest
             builder.Query = ProcessQueryParams();
 
             Uri requestUri = builder.Uri;
+
             return requestUri;
         }
 
