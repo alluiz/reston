@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -10,72 +11,80 @@ using Newtonsoft.Json.Serialization;
 
 namespace NU2Rest
 {
-    public class NU2RestRequest : INU2RestRequest
+    public class RestRequest : IRestRequest
     {
+        private const int PORT_DEFAULT = 80;
+        //Use this if no scheme was specified
         private const string SCHEME_DEFAULT = "http";
-
-        public string Body { get; set; }
-        public string Path { get; set; }
-
-        public Dictionary<string, string> Headers { get; set; }
-        public Dictionary<string, string> Params { get; set; }
-        public Dictionary<string, string> QueryParams { get; set; }
-        public string Host { get; set; }
-        public int Port { get; set; }
-        private string scheme = SCHEME_DEFAULT;
         private readonly HttpClient httpClient;
-        private readonly NU2RestResponseEngine responseEngine;
+        private readonly RestResponseEngine responseEngine;
 
+        public Dictionary<string, string> Headers { get; private set; }
+        public Dictionary<string, string> Params { get; private set; }
+        public Dictionary<string, string> QueryParams { get; private set; }
+        public int Port { get; set; }
+        public string Host { get; set; }
+        public string Path { get; set; }
+        public string Scheme { get; set; }
 
-        public NU2RestRequest(string url, HttpClient httpClient, NU2RestResponseEngine responseEngine)
+        private void InitProperties()
+        {
+            Headers = new Dictionary<string, string>();
+            Params = new Dictionary<string, string>();
+            QueryParams = new Dictionary<string, string>();
+            Scheme = SCHEME_DEFAULT;
+        }
+        public RestRequest(string host, int port, string path, HttpClient httpClient, RestResponseEngine responseEngine)
+        {
+            Host = host;
+            Path = path;
+            Port = port;
+
+            this.httpClient = httpClient;
+            this.responseEngine = responseEngine;
+
+            InitProperties();
+        }
+        public RestRequest(string host, string path, HttpClient httpClient, RestResponseEngine responseEngine)
+        {
+            Host = host;
+            Path = path;
+            Port = PORT_DEFAULT;
+
+            this.httpClient = httpClient;
+            this.responseEngine = responseEngine;
+
+            InitProperties();
+        }
+        public RestRequest(string url, HttpClient httpClient, RestResponseEngine responseEngine)
         {
             Uri uri = new Uri(url);
 
             Host = uri.Host;
             Port = uri.Port;
             Path = uri.AbsolutePath;
-            scheme = uri.Scheme;
+            Scheme = uri.Scheme;
 
             this.httpClient = httpClient;
             this.responseEngine = responseEngine;
 
-            Params = new Dictionary<string, string>();
-            QueryParams = new Dictionary<string, string>();
+            InitProperties();
         }
 
-        public NU2RestRequest(string host, string path, HttpClient httpClient, NU2RestResponseEngine responseEngine)
+        public async Task<RestResponse<TResponseDataModel>> ReadAsync<TResponseDataModel>(HttpStatusCode expectedStatusCode = HttpStatusCode.OK, JsonSerializerSettings settings = null) where TResponseDataModel : new()
         {
-            Host = host;
-            Path = path;
-            Port = 80;
-            this.httpClient = httpClient;
-            this.responseEngine = responseEngine;
-            Params = new Dictionary<string, string>();
-            QueryParams = new Dictionary<string, string>();
-        }
-
-        public NU2RestRequest(string host, int port, string path, HttpClient httpClient, NU2RestResponseEngine responseEngine)
-        {
-            Host = host;
-            Path = path;
-            Port = port;
-            this.httpClient = httpClient;
-            this.responseEngine = responseEngine;
-            Params = new Dictionary<string, string>();
-            QueryParams = new Dictionary<string, string>();
-        }
-
-        public async Task<NU2RestResponse<TResponseDataModel>> ReadAsync<TResponseDataModel>() where TResponseDataModel : new()
-        {
-            NU2RestResponse<TResponseDataModel> response = default(NU2RestResponse<TResponseDataModel>);
+            RestResponse<TResponseDataModel> response = null;
 
             try
             {
+
+                settings = CheckJsonSerializerSettings(settings);
+
                 Uri requestUri = GetRequestUri();
 
                 HttpResponseMessage responseMessage = await httpClient.GetAsync(requestUri);
 
-                response = await responseEngine.ProcessMessageAsync<TResponseDataModel>(responseMessage);
+                response = await responseEngine.ProcessMessageAsync<TResponseDataModel>(responseMessage, expectedStatusCode: expectedStatusCode);
             }
             catch (System.Exception)
             {
@@ -85,9 +94,7 @@ namespace NU2Rest
             return response;
         }
 
-        
-
-        public async Task<NU2RestResponse<TResponseDataModel>> CreateAsync<TRequestDataModel, TResponseDataModel>(TRequestDataModel data, JsonSerializerSettings settings = null) where TResponseDataModel : new()
+        public async Task<RestResponse<TResponseDataModel>> CreateAsync<TRequestDataModel, TResponseDataModel>(TRequestDataModel data, HttpStatusCode expectedStatusCode = HttpStatusCode.Created, JsonSerializerSettings settings = null) where TResponseDataModel : new()
         {
             settings = CheckJsonSerializerSettings(settings);
 
@@ -95,14 +102,14 @@ namespace NU2Rest
 
             Uri requestUri = GetRequestUri();
 
-            NU2RestResponse<TResponseDataModel> response = default(NU2RestResponse<TResponseDataModel>);
+            RestResponse<TResponseDataModel> response = default(RestResponse<TResponseDataModel>);
 
             try
             {
                 StringContent content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
                 HttpResponseMessage responseMessage = await httpClient.PostAsync(requestUri, content);
 
-                response = await responseEngine.ProcessMessageAsync<TResponseDataModel>(responseMessage);
+                response = await responseEngine.ProcessMessageAsync<TResponseDataModel>(responseMessage, expectedStatusCode: expectedStatusCode);
             }
             catch (System.Exception)
             {
@@ -112,7 +119,7 @@ namespace NU2Rest
             return response;
         }
 
-        public async Task<NU2RestResponse<TResponseDataModel>> UpdateAsync<TRequestDataModel, TResponseDataModel>(TRequestDataModel data, JsonSerializerSettings settings = null) where TResponseDataModel : new()
+        public async Task<RestResponse<TResponseDataModel>> UpdateAsync<TRequestDataModel, TResponseDataModel>(TRequestDataModel data, HttpStatusCode expectedStatusCode = HttpStatusCode.OK, JsonSerializerSettings settings = null) where TResponseDataModel : new()
         {
             settings = CheckJsonSerializerSettings(settings);
 
@@ -120,14 +127,14 @@ namespace NU2Rest
 
             Uri requestUri = GetRequestUri();
 
-            NU2RestResponse<TResponseDataModel> response = default(NU2RestResponse<TResponseDataModel>);
+            RestResponse<TResponseDataModel> response = default(RestResponse<TResponseDataModel>);
 
             try
             {
                 StringContent content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
                 HttpResponseMessage responseMessage = await httpClient.PutAsync(requestUri, content);
 
-                response = await responseEngine.ProcessMessageAsync<TResponseDataModel>(responseMessage);
+                response = await responseEngine.ProcessMessageAsync<TResponseDataModel>(responseMessage, expectedStatusCode: expectedStatusCode);
             }
             catch (System.Exception)
             {
@@ -137,7 +144,7 @@ namespace NU2Rest
             return response;
         }
 
-        public async Task<NU2RestResponse<TResponseDataModel>> UpdatePartialAsync<TRequestDataModel, TResponseDataModel>(TRequestDataModel data, JsonSerializerSettings settings = null) where TResponseDataModel : new()
+        public async Task<RestResponse<TResponseDataModel>> UpdatePartialAsync<TRequestDataModel, TResponseDataModel>(TRequestDataModel data, HttpStatusCode expectedStatusCode = HttpStatusCode.OK, JsonSerializerSettings settings = null) where TResponseDataModel : new()
         {
             settings = CheckJsonSerializerSettings(settings);
 
@@ -145,7 +152,7 @@ namespace NU2Rest
 
             Uri requestUri = GetRequestUri();
 
-            NU2RestResponse<TResponseDataModel> response = default(NU2RestResponse<TResponseDataModel>);
+            RestResponse<TResponseDataModel> response = default(RestResponse<TResponseDataModel>);
 
             try
             {
@@ -154,7 +161,7 @@ namespace NU2Rest
                 HttpResponseMessage responseMessage = await httpClient.SendAsync(requestMessage);
 
                 string jsonResponseBody = await responseMessage.Content.ReadAsStringAsync();
-                response = await responseEngine.ProcessMessageAsync<TResponseDataModel>(responseMessage);
+                response = await responseEngine.ProcessMessageAsync<TResponseDataModel>(responseMessage, expectedStatusCode: expectedStatusCode);
 
             }
             catch (System.Exception)
@@ -165,16 +172,16 @@ namespace NU2Rest
             return response;
         }
 
-        public async Task<NU2RestResponse<TResponseDataModel>> DestroyAsync<TResponseDataModel>() where TResponseDataModel : new()
+        public async Task<RestResponse<TResponseDataModel>> DestroyAsync<TResponseDataModel>(HttpStatusCode expectedStatusCode = HttpStatusCode.NoContent) where TResponseDataModel : new()
         {
             Uri requestUri = GetRequestUri();
 
-            NU2RestResponse<TResponseDataModel> response = default(NU2RestResponse<TResponseDataModel>);
+            RestResponse<TResponseDataModel> response = default(RestResponse<TResponseDataModel>);
 
             try
             {
                 HttpResponseMessage responseMessage = await httpClient.GetAsync(requestUri);
-                response = await responseEngine.ProcessMessageAsync<TResponseDataModel>(responseMessage);
+                response = await responseEngine.ProcessMessageAsync<TResponseDataModel>(responseMessage, expectedStatusCode: expectedStatusCode);
             }
             catch (System.Exception)
             {
@@ -199,8 +206,10 @@ namespace NU2Rest
 
         public void UseHttps()
         {
-            scheme = "https";
+            //Define the scheme to HTTPS
+            Scheme = "https";
 
+            //Set the port number ONLY if it's default value 80. Otherwise, maintain the choosed port.
             if (Port == 80)
                 Port = 443;
         }
@@ -209,7 +218,7 @@ namespace NU2Rest
         {
             ProcessParams();
 
-            UriBuilder builder = new UriBuilder(scheme, Host, Port, Path);
+            UriBuilder builder = new UriBuilder(Scheme, Host, Port, Path);
 
             builder.Query = ProcessQueryParams();
 

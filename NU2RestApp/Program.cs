@@ -22,35 +22,22 @@ namespace NU2RestApp
         private static void RunApp()
         {
             //All created request must use HTTPS
-            NU2RestService restService = new NU2RestService(NU2RestScheme.HTTPS);
+            RestService restService = new RestService(RestScheme.HTTPS);
 
-            const string host = "jsonplaceholder.typicode.com"; //DON'T put the scheme here! E.g HTTPS or HTTP. Instead use the method 'useHttps' or leave the HTTP default scheme.
-            const string path = "/posts/:id"; //The path parameter ":id" must be add to 'Params' property. Otherwise, the request will throw an ArgumentNullException
+            const string host = "httpstat.us"; //DON'T put the scheme here! E.g HTTPS or HTTP. Instead use the method 'useHttps' or leave the HTTP default scheme.
+            const string path = "/:statusCode"; //The path parameter ":id" must be add to 'Params' property. Otherwise, the request will throw an ArgumentNullException
 
-            INU2RestRequest request = restService.CreateRequest(
+            IRestRequest request = restService.CreateRequest(
                 host: host,
                 path: path);
 
             //request.UseHttps(); //Only if the server support HTTPS request. Attention: Server certificate must be valid.
 
-            request.Params.Add("id", "1");
+            request.Params.Add("statusCode", "401");
 
-            NU2RestResponse<Post> response = request.ReadAsync<Post>().Result;
+            RestResponse<Post> response = request.ReadAsync<Post>().Result;
 
             Console.WriteLine(response.MetaData.StatusCode);
-            Console.WriteLine(response.Data.Title);
-
-            Post post = new Post()
-            {
-                Body = "xxx",
-                Title = "aosdokpa",
-                UserId = 2
-            };
-
-            NU2RestResponse<Post> response2 = request.UpdateAsync<Post, Post>(post).Result;
-
-            Console.WriteLine(response2.MetaData.StatusCode);
-            Console.WriteLine(response2.Data.Title);
         }
     }
 

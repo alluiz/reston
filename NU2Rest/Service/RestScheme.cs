@@ -1,6 +1,6 @@
 namespace NU2Rest
 {
-    public enum NU2RestScheme
+    public enum RestScheme
     {
         HTTP,
         HTTPS
