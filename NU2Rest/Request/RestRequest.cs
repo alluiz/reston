@@ -13,26 +13,26 @@ namespace NU2Rest
 {
     public class RestRequest : IRestRequest
     {
-        private const int PORT_DEFAULT = 80;
-        private const string SCHEME_DEFAULT = "http";
+        private const int HTTP_PORT_DEFAULT = 80;
+        private const string HTTTP_SCHEME_DEFAULT = "http";
         private JsonSerializerSettings defaultSettings;
         private readonly HttpClient httpClient;
         private readonly RestResponseEngine responseEngine;
 
-        public Dictionary<string, string> Headers { get; private set; }
+        public Dictionary<string, IEnumerable<string>> Headers { get; private set; }
         public Dictionary<string, string> Params { get; private set; }
         public Dictionary<string, string> QueryParams { get; private set; }
         public int Port { get; set; }
         public string Host { get; set; }
         public string Path { get; set; }
-        public string Scheme { get; set; }
+        public string Scheme { get; private set; }
 
         private void InitProperties()
         {
-            Headers = new Dictionary<string, string>();
+            Headers = new Dictionary<string, IEnumerable<string>>();
             Params = new Dictionary<string, string>();
             QueryParams = new Dictionary<string, string>();
-            Scheme = SCHEME_DEFAULT;
+            Scheme = HTTTP_SCHEME_DEFAULT;
             defaultSettings = InitJsonDefaultSettings();
         }
 
@@ -60,7 +60,7 @@ namespace NU2Rest
         {
             Host = host;
             Path = path;
-            Port = PORT_DEFAULT;
+            Port = HTTP_PORT_DEFAULT;
 
             this.httpClient = httpClient;
             this.responseEngine = responseEngine;
@@ -167,13 +167,13 @@ namespace NU2Rest
 
         public async Task<RestResponse<TResponseDataModel>> DestroyAsync<TResponseDataModel>(HttpStatusCode expectedStatusCode = HttpStatusCode.NoContent) where TResponseDataModel : new()
         {
-           return await DoRequestAsync<TResponseDataModel>(
-                async (requestUri) =>
-                {
-                    HttpResponseMessage responseMessage = await httpClient.DeleteAsync(requestUri);
+            return await DoRequestAsync<TResponseDataModel>(
+                 async (requestUri) =>
+                 {
+                     HttpResponseMessage responseMessage = await httpClient.DeleteAsync(requestUri);
 
-                    return responseMessage;
-                }, expectedStatusCode);
+                     return responseMessage;
+                 }, expectedStatusCode);
         }
 
         private JsonSerializerSettings CheckJsonSerializerSettings(JsonSerializerSettings settings)
@@ -247,6 +247,44 @@ namespace NU2Rest
             }
 
             return query;
+        }
+
+        public void UseBearerAuthentication(string access_token)
+        {
+            UseAuthentication(RestAuthentication.BEARER, access_token);
+        }
+
+        private void UseAuthentication(RestAuthentication authenticationType, string credentials)
+        {
+            string authorization = string.Empty;
+
+            switch (authenticationType)
+            {
+                case RestAuthentication.BEARER:
+                    {                        
+                        httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", credentials);
+                        break;
+                    }
+                case RestAuthentication.BASIC:
+                    {
+                        httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", credentials);
+                        break;
+                    }
+                default:
+                    {
+                        throw new ArgumentException("Authentication type is invalid.", authenticationType.ToString());
+                    }
+            }
+
+        }
+
+        public void UseBasicAuthentication(string username, string password)
+        {
+            string credentials = $"{username}:{password}";
+
+            string credentials64 = Encoding.UTF8.EncodeBase64(credentials);
+
+            UseAuthentication(RestAuthentication.BASIC, credentials64); 
         }
     }
 }
