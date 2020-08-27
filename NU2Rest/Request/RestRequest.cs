@@ -11,22 +11,74 @@ using Newtonsoft.Json.Serialization;
 
 namespace NU2Rest
 {
+    /// <summary>
+    /// Class for make REST requests
+    /// </summary>
     public class RestRequest : IRestRequest
     {
+        /// <value>
+        /// Default HTTP Port: 80
+        /// </value>
         private const int HTTP_PORT_DEFAULT = 80;
-        private const string HTTTP_SCHEME_DEFAULT = "http";
-        private JsonSerializerSettings defaultSettings;
-        private readonly HttpClient httpClient;
-        private readonly RestResponseEngine responseEngine;
 
+        /// <value>
+        /// Default HTTP scheme: HTTP
+        /// </value>
+        private const string HTTTP_SCHEME_DEFAULT = "http";
+
+        /// <value>
+        /// Default JSON Serializer settings. Null values will be ignored.
+        /// </value>
+        private JsonSerializerSettings defaultSettings;
+
+        /// <value>
+        /// HTTP Client singleton instance
+        /// </value>
+        private readonly HttpClient httpClient;
+
+        /// <value>
+        /// REST Response engine object for process responses
+        /// </value>
+        private readonly IRestResponseEngine responseEngine;
+
+        /// <value>
+        /// Headers that will be sent into the REST request
+        /// </value>
         public Dictionary<string, IEnumerable<string>> Headers { get; private set; }
+
+        /// <value>
+        /// Path params that will be replaced in the path
+        /// </value>
         public Dictionary<string, string> Params { get; private set; }
+
+        /// <value>
+        /// Query params that will be sent into the REST request
+        /// </value>
         public Dictionary<string, string> QueryParams { get; private set; }
+
+        /// <value>
+        /// The HTTP Port
+        /// </value>
         public int Port { get; set; }
+
+        /// <value>
+        /// The Host
+        /// </value>
         public string Host { get; set; }
+
+        /// <value>
+        /// The REST request path
+        /// </value>
         public string Path { get; set; }
+
+        /// <value>
+        /// HTTP Scheme. Can be HTTPS or HTTP
+        /// </value>
         public string Scheme { get; private set; }
 
+        /// <value>
+        /// Initialize the properties objects
+        /// </value>
         private void InitProperties()
         {
             Headers = new Dictionary<string, IEnumerable<string>>();
@@ -36,6 +88,10 @@ namespace NU2Rest
             defaultSettings = InitJsonDefaultSettings();
         }
 
+        /// <summary>
+        /// Initialize JSON Default settings
+        /// </summary>
+        /// <returns>The JSON Serializer default settings</returns>
         private JsonSerializerSettings InitJsonDefaultSettings()
         {
             JsonSerializerSettings settings = new JsonSerializerSettings();
@@ -45,7 +101,15 @@ namespace NU2Rest
             return settings;
         }
 
-        public RestRequest(string host, int port, string path, HttpClient httpClient, RestResponseEngine responseEngine)
+        /// <summary>
+        /// Create a REST request instance
+        /// </summary>
+        /// <param name="host">The host server. Eg.: "google.com"</param>
+        /// <param name="port">The HTTP port</param>
+        /// <param name="path">The REST request path</param>
+        /// <param name="httpClient">The HTTP Client instance</param>
+        /// <param name="responseEngine">The REST response engine instance</param>
+        public RestRequest(string host, int port, string path, HttpClient httpClient, IRestResponseEngine responseEngine)
         {
             Host = host;
             Path = path;
@@ -56,7 +120,15 @@ namespace NU2Rest
 
             InitProperties();
         }
-        public RestRequest(string host, string path, HttpClient httpClient, RestResponseEngine responseEngine)
+
+        /// <summary>
+        /// Create a REST request instance. Uses a default HTTP Port: 80
+        /// </summary>
+        /// <param name="host">The host server. Eg.: "google.com"</param>
+        /// <param name="path">The REST request path</param>
+        /// <param name="httpClient">The HTTP Client instance</param>
+        /// <param name="responseEngine">The REST response engine instance</param>
+        public RestRequest(string host, string path, HttpClient httpClient, IRestResponseEngine responseEngine)
         {
             Host = host;
             Path = path;
@@ -67,7 +139,14 @@ namespace NU2Rest
 
             InitProperties();
         }
-        public RestRequest(string url, HttpClient httpClient, RestResponseEngine responseEngine)
+
+        /// <summary>
+        /// Create a REST request instance
+        /// </summary>
+        /// <param name="url">The full URL. Must be a valid URL!</param>
+        /// <param name="httpClient">The HTTP Client instance</param>
+        /// <param name="responseEngine">The REST response engine instance</param>
+        public RestRequest(string url, HttpClient httpClient, IRestResponseEngine responseEngine)
         {
             Uri uri = new Uri(url);
 
@@ -82,7 +161,14 @@ namespace NU2Rest
             InitProperties();
         }
 
-        public StringContent GetContentBody<TRequestDataModel>(TRequestDataModel data, JsonSerializerSettings settings)
+        /// <summary>
+        /// Converts the <paramref name="data"/> in json format
+        /// </summary>
+        /// <typeparam name="TRequestDataModel">The Request Model Type</typeparam>
+        /// <param name="data"><c>TRequestDataModel</c> object</param>
+        /// <param name="settings"></param>
+        /// <returns>A string in json format</returns>
+        private StringContent GetContentBody<TRequestDataModel>(TRequestDataModel data, JsonSerializerSettings settings)
         {
             settings = CheckJsonSerializerSettings(settings);
             string jsonBody = Newtonsoft.Json.JsonConvert.SerializeObject(data, Formatting.Indented, settings);
@@ -91,7 +177,7 @@ namespace NU2Rest
             return content;
         }
 
-        public async Task<RestResponse<TResponseDataModel>> DoRequestAsync<TResponseDataModel>(Func<Uri, Task<HttpResponseMessage>> requestAsync, HttpStatusCode expectedStatusCode) where TResponseDataModel : new()
+        private async Task<RestResponse<TResponseDataModel>> DoRequestAsync<TResponseDataModel>(Func<Uri, Task<HttpResponseMessage>> requestAsync, HttpStatusCode expectedStatusCode) where TResponseDataModel : new()
         {
             try
             {
@@ -261,7 +347,7 @@ namespace NU2Rest
             switch (authenticationType)
             {
                 case RestAuthentication.BEARER:
-                    {                        
+                    {
                         httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", credentials);
                         break;
                     }
@@ -284,7 +370,7 @@ namespace NU2Rest
 
             string credentials64 = Encoding.UTF8.EncodeBase64(credentials);
 
-            UseAuthentication(RestAuthentication.BASIC, credentials64); 
+            UseAuthentication(RestAuthentication.BASIC, credentials64);
         }
     }
 }

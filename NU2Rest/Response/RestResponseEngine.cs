@@ -7,7 +7,12 @@ using Newtonsoft.Json;
 
 namespace NU2Rest
 {
-    public class RestResponseEngine
+    public interface IRestResponseEngine
+    {
+        Task<RestResponse<TResponseDataModel>> ProcessMessageAsync<TResponseDataModel>(HttpResponseMessage responseMessage, HttpStatusCode expectedStatusCode) where TResponseDataModel : new();
+    }
+
+    public class RestResponseEngine : IRestResponseEngine
     {
         public async Task<RestResponse<TResponseDataModel>> ProcessMessageAsync<TResponseDataModel>(HttpResponseMessage responseMessage, HttpStatusCode expectedStatusCode) where TResponseDataModel : new()
         {
