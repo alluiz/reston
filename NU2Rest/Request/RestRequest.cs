@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -201,6 +202,17 @@ namespace NU2Rest
             {
                 throw;
             }
+        }
+
+        public async Task<RestResponse<List<TResponseDataModel>>> ReadAllAsync<TResponseDataModel>(HttpStatusCode expectedStatusCode = HttpStatusCode.OK) where TResponseDataModel : new()
+        {
+            return await DoRequestAsync<List<TResponseDataModel>>(
+                async (requestUri) =>
+                {
+                    HttpResponseMessage responseMessage = await httpClient.GetAsync(requestUri);
+
+                    return responseMessage;
+                }, expectedStatusCode);
         }
 
         public async Task<RestResponse<TResponseDataModel>> ReadAsync<TResponseDataModel>(HttpStatusCode expectedStatusCode = HttpStatusCode.OK) where TResponseDataModel : new()

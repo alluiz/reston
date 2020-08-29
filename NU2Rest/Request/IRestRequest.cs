@@ -23,5 +23,6 @@ namespace NU2Rest
         void UseBasicAuthentication(string username, string password);
         Task<RestResponse<TResponseDataModel>> UpdatePartialAsync<TRequestDataModel, TResponseDataModel>(TRequestDataModel data, HttpStatusCode expectedStatusCode = HttpStatusCode.OK, JsonSerializerSettings settings = null) where TResponseDataModel : new();
         void UseHttps();
+        Task<RestResponse<List<TResponseDataModel>>> ReadAllAsync<TResponseDataModel>(HttpStatusCode expectedStatusCode = HttpStatusCode.OK) where TResponseDataModel : new();
     }
 }
