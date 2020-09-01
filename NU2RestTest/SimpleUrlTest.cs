@@ -1,0 +1,174 @@
+﻿using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client;
+using NU2Rest;
+using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Net.Http;
+using System.Text;
+using Xunit;
+
+namespace NU2RestTest
+{
+    public class SimpleUrlTest
+    {
+        [Fact]
+        public void SimpleUrlWithHttpRequestTest()
+        {
+            string url = "http://domain.com";
+
+            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
+
+            IRestRequest request = new RestRequest(url, httpClient, new RestResponseEngine());
+
+            Assert.Equal("domain.com", request.Host);
+            Assert.Equal(80, request.Port);
+            Assert.Equal("/", request.Path);
+            Assert.Equal("http", request.Scheme);
+
+        }
+
+        [Fact]
+        public void SimpleUrlWithHttpAndSubDomainRequestTest()
+        {
+            string url = "http://subdomain.domain.com";
+
+            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
+
+            IRestRequest request = new RestRequest(url, httpClient, new RestResponseEngine());
+
+            Assert.Equal("subdomain.domain.com", request.Host);
+            Assert.Equal(80, request.Port);
+            Assert.Equal("/", request.Path);
+            Assert.Equal("http", request.Scheme);
+
+        }
+
+        [Fact]
+        public void SimpleUrlWithHttpsAndSubDomainRequestTest()
+        {
+            string url = "https://subdomain.domain.com";
+
+            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
+
+            IRestRequest request = new RestRequest(url, httpClient, new RestResponseEngine());
+
+            Assert.Equal("subdomain.domain.com", request.Host);
+            Assert.Equal(443, request.Port);
+            Assert.Equal("/", request.Path);
+            Assert.Equal("https", request.Scheme);
+
+        }
+
+        [Fact]
+        public void SimpleUrlWithHttpsRequestTest()
+        {
+            string url = "https://domain.com";
+
+            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
+
+            IRestRequest request = new RestRequest(url, httpClient, new RestResponseEngine());
+
+            Assert.Equal("domain.com", request.Host);
+            Assert.Equal(443, request.Port);
+            Assert.Equal("/", request.Path);
+            Assert.Equal("https", request.Scheme);
+
+        }
+
+        [Fact]
+        public void SimpleUrlWithHttpAndPortRequestTest()
+        {
+            string url = "http://domain.com:8075";
+
+            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
+
+            IRestRequest request = new RestRequest(url, httpClient, new RestResponseEngine());
+
+            Assert.Equal("domain.com", request.Host);
+            Assert.Equal(8075, request.Port);
+            Assert.Equal("/", request.Path);
+            Assert.Equal("http", request.Scheme);
+
+        }
+
+        [Fact]
+        public void SimpleUrlWithHttpsAndPortRequestTest()
+        {
+            string url = "https://domain.com:8075";
+
+            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
+
+            IRestRequest request = new RestRequest(url, httpClient, new RestResponseEngine());
+
+            Assert.Equal("domain.com", request.Host);
+            Assert.Equal(8075, request.Port);
+            Assert.Equal("/", request.Path);
+            Assert.Equal("https", request.Scheme);
+
+        }
+
+        [Fact]
+        public void SimpleUrlWithHttpAndPathRequestTest()
+        {
+            string url = "http://domain.com/path";
+
+            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
+
+            IRestRequest request = new RestRequest(url, httpClient, new RestResponseEngine());
+
+            Assert.Equal("domain.com", request.Host);
+            Assert.Equal(80, request.Port);
+            Assert.Equal("/path", request.Path);
+            Assert.Equal("http", request.Scheme);
+
+        }
+
+        [Fact]
+        public void SimpleUrlWithHttpsAndPathRequestTest()
+        {
+            string url = "https://domain.com/path";
+
+            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
+
+            IRestRequest request = new RestRequest(url, httpClient, new RestResponseEngine());
+
+            Assert.Equal("domain.com", request.Host);
+            Assert.Equal(443, request.Port);
+            Assert.Equal("/path", request.Path);
+            Assert.Equal("https", request.Scheme);
+
+        }
+
+        [Fact]
+        public void SimpleUrlWithHttpAndPortAndPathRequestTest()
+        {
+            string url = "http://domain.com:8075/path";
+
+            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
+
+            IRestRequest request = new RestRequest(url, httpClient, new RestResponseEngine());
+
+            Assert.Equal("domain.com", request.Host);
+            Assert.Equal(8075, request.Port);
+            Assert.Equal("/path", request.Path);
+            Assert.Equal("http", request.Scheme);
+
+        }
+
+        [Fact]
+        public void SimpleUrlWithHttpsAndPortAndPathRequestTest()
+        {
+            string url = "https://domain.com:8075/path";
+
+            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
+
+            IRestRequest request = new RestRequest(url, httpClient, new RestResponseEngine());
+
+            Assert.Equal("domain.com", request.Host);
+            Assert.Equal(8075, request.Port);
+            Assert.Equal("/path", request.Path);
+            Assert.Equal("https", request.Scheme);
+
+        }
+    }
+}

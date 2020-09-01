@@ -10,7 +10,7 @@ using Newtonsoft.Json;
 
 namespace NU2RestTest
 {
-    public class RestRequestTest
+    public class ReadTest
     {
         [Fact]
         public void TestReadAll()
@@ -21,9 +21,9 @@ namespace NU2RestTest
              * 
              */
 
-            string url = "http://domain.net/test/v1/test";
+            string requestUrl = "http://domain.net/test/v1/test";
 
-            Dictionary<string, IEnumerable<string>> headers = new Dictionary<string, IEnumerable<string>>
+            Dictionary<string, IEnumerable<string>> responseHeaders = new Dictionary<string, IEnumerable<string>>
             {
                 { "x-correlationId", new string[] { "read-test-1" } }
             };
@@ -34,11 +34,11 @@ namespace NU2RestTest
                 new TestModel() { Id = 2, Name = "ReadAllTest2", Status = false }
             };
 
-            string body = JsonConvert.SerializeObject(dataExpected);
+            string responseBody = JsonConvert.SerializeObject(dataExpected);
 
-            const HttpStatusCode statusCode = HttpStatusCode.OK;
+            const HttpStatusCode responseStatusCode = HttpStatusCode.OK;
 
-            IRestRequest request = CreateRestRequest(url, headers, body, statusCode);
+            IRestRequest request = CreateMockedRestRequest(requestUrl, responseHeaders, responseBody, responseStatusCode);
 
             /*
              * 
@@ -69,11 +69,80 @@ namespace NU2RestTest
 
             //Check metadata
             Assert.Equal((int)HttpStatusCode.OK, metadata.StatusCode);
-            Assert.Equal(body, metadata.JsonBody);
+            Assert.Equal(responseBody, metadata.JsonBody);
             Assert.NotNull(metadata.Headers);
             Assert.Single(metadata.Headers);
             Assert.Single(metadata.Headers["x-correlationId"]);
             Assert.Equal("read-test-1", metadata.Headers["x-correlationId"].ToArray()[0]);
+        }
+
+        [Fact]
+        public void TestReadAllWithFilters()
+        {
+            /*
+             * 
+             * ARRANGE 
+             * 
+             */
+
+            string requestUrl = "http://domain.net/test/v1/test";
+
+            Dictionary<string, IEnumerable<string>> responseHeaders = new Dictionary<string, IEnumerable<string>>
+            {
+                { "x-correlationId", new string[] { "read-test-2" } }
+            };
+
+            List<TestModel> dataExpected = new List<TestModel>
+            {
+                new TestModel() { Id = 1, Name = "ReadAllTest", Status = true }
+            };
+
+            string responseBody = JsonConvert.SerializeObject(dataExpected);
+
+            const HttpStatusCode responseStatusCode = HttpStatusCode.OK;
+
+            IRestRequest request = CreateMockedRestRequest(requestUrl, responseHeaders, responseBody, responseStatusCode);
+
+            /*
+             * 
+             * ACT
+             * 
+             */
+
+            request.QueryParams.Add("name", "ReadAllTest");
+
+            RestResponse<List<TestModel>> response = request.ReadAllAsync<TestModel>().Result;
+
+            List<TestModel> data = response.Data;
+            RestResponseMetadata metadata = response.MetaData;
+
+            /*
+             * 
+             * ASSERT
+             * 
+             */
+
+            //Check if not null
+            Assert.NotNull(data);
+            Assert.NotNull(metadata);
+            Assert.NotNull(request.Headers);
+            Assert.NotNull(request.Params);
+            Assert.NotNull(request.QueryParams);
+
+            //Check querry params
+            Assert.Single(request.QueryParams);
+            Assert.Equal("ReadAllTest", request.QueryParams["name"]);
+
+            //Check model data
+            Assert.Equal(dataExpected, data, new TestModelComparer());
+
+            //Check metadata
+            Assert.Equal((int)HttpStatusCode.OK, metadata.StatusCode);
+            Assert.Equal(responseBody, metadata.JsonBody);
+            Assert.NotNull(metadata.Headers);
+            Assert.Single(metadata.Headers);
+            Assert.Single(metadata.Headers["x-correlationId"]);
+            Assert.Equal("read-test-2", metadata.Headers["x-correlationId"].ToArray()[0]);
         }
 
         [Fact]
@@ -98,7 +167,7 @@ namespace NU2RestTest
 
             const HttpStatusCode statusCode = HttpStatusCode.OK;
 
-            IRestRequest request = CreateRestRequest(url, headers, body, statusCode);
+            IRestRequest request = CreateMockedRestRequest(url, headers, body, statusCode);
 
             request.Params.Add("test_id", "1");
 
@@ -126,6 +195,10 @@ namespace NU2RestTest
             Assert.NotNull(request.Params);
             Assert.NotNull(request.QueryParams);
 
+            //Check path params
+            Assert.Single(request.Params);
+            Assert.Equal("1", request.Params["test_id"]);
+
             //Check model data
             Assert.Equal(dataExpected, data, new TestModelComparer());
 
@@ -138,7 +211,7 @@ namespace NU2RestTest
             Assert.Equal("read-test-1", metadata.Headers["x-correlationId"].ToArray()[0]);
         }
 
-        private static IRestRequest CreateRestRequest(string url, Dictionary<string, IEnumerable<string>> headers, string body, HttpStatusCode statusCode)
+        private static IRestRequest CreateMockedRestRequest(string url, Dictionary<string, IEnumerable<string>> headers, string body, HttpStatusCode statusCode)
         {
             HttpClient httpClient = GetHttpClient(headers, body, statusCode);
 
@@ -154,12 +227,5 @@ namespace NU2RestTest
             HttpClient httpClient = new HttpClient(handler);
             return httpClient;
         }
-    }
-
-    public class TestModel
-    {
-        public bool Status { get; set; }
-        public string Name { get; set; }
-        public int? Id { get; set; }
     }
 }

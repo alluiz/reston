@@ -25,7 +25,7 @@ namespace NU2Rest
         /// <value>
         /// Default HTTP scheme: HTTP
         /// </value>
-        private const string HTTTP_SCHEME_DEFAULT = "http";
+        private const string HTTP_SCHEME_DEFAULT = "http";
 
         /// <value>
         /// Default JSON Serializer settings. Null values will be ignored.
@@ -85,7 +85,6 @@ namespace NU2Rest
             Headers = new Dictionary<string, IEnumerable<string>>();
             Params = new Dictionary<string, string>();
             QueryParams = new Dictionary<string, string>();
-            Scheme = HTTTP_SCHEME_DEFAULT;
             defaultSettings = InitJsonDefaultSettings();
         }
 
@@ -115,6 +114,7 @@ namespace NU2Rest
             Host = host;
             Path = path;
             Port = port;
+            Scheme = HTTP_SCHEME_DEFAULT;
 
             this.httpClient = httpClient;
             this.responseEngine = responseEngine;
@@ -134,6 +134,7 @@ namespace NU2Rest
             Host = host;
             Path = path;
             Port = HTTP_PORT_DEFAULT;
+            Scheme = HTTP_SCHEME_DEFAULT;
 
             this.httpClient = httpClient;
             this.responseEngine = responseEngine;
