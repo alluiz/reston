@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -35,7 +36,7 @@ namespace NU2Rest
         /// <value>
         /// HTTP Client singleton instance
         /// </value>
-        private readonly HttpClient httpClient;
+        private readonly IHttpClientDecorator httpClient;
 
         /// <value>
         /// REST Response engine object for process responses
@@ -45,7 +46,10 @@ namespace NU2Rest
         /// <value>
         /// Headers that will be sent into the REST request
         /// </value>
-        public Dictionary<string, IEnumerable<string>> Headers { get; private set; }
+        public HttpRequestHeaders Headers 
+        { 
+            get => httpClient.DefaultRequestHeaders; 
+        }
 
         /// <value>
         /// Path params that will be replaced in the path
@@ -82,7 +86,6 @@ namespace NU2Rest
         /// </value>
         private void InitProperties()
         {
-            Headers = new Dictionary<string, IEnumerable<string>>();
             Params = new Dictionary<string, string>();
             QueryParams = new Dictionary<string, string>();
             defaultSettings = InitJsonDefaultSettings();
@@ -109,7 +112,7 @@ namespace NU2Rest
         /// <param name="path">The REST request path</param>
         /// <param name="httpClient">The HTTP Client instance</param>
         /// <param name="responseEngine">The REST response engine instance</param>
-        public RestRequest(string host, int port, string path, HttpClient httpClient, IRestResponseEngine responseEngine)
+        public RestRequest(string host, int port, string path, IHttpClientDecorator httpClient, IRestResponseEngine responseEngine)
         {
             Host = host;
             Path = path;
@@ -129,7 +132,7 @@ namespace NU2Rest
         /// <param name="path">The REST request path</param>
         /// <param name="httpClient">The HTTP Client instance</param>
         /// <param name="responseEngine">The REST response engine instance</param>
-        public RestRequest(string host, string path, HttpClient httpClient, IRestResponseEngine responseEngine)
+        public RestRequest(string host, string path, IHttpClientDecorator httpClient, IRestResponseEngine responseEngine)
         {
             Host = host;
             Path = path;
@@ -148,7 +151,7 @@ namespace NU2Rest
         /// <param name="url">The full URL. Must be a valid URL!</param>
         /// <param name="httpClient">The HTTP Client instance</param>
         /// <param name="responseEngine">The REST response engine instance</param>
-        public RestRequest(string url, HttpClient httpClient, IRestResponseEngine responseEngine)
+        public RestRequest(string url, IHttpClientDecorator httpClient, IRestResponseEngine responseEngine)
         {
             Uri uri = new Uri(url);
 
@@ -199,13 +202,13 @@ namespace NU2Rest
                 Console.WriteLine(ex.ToString());
                 throw;
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
                 throw;
             }
         }
 
-        public async Task<RestResponse<List<TResponseDataModel>>> ReadAllAsync<TResponseDataModel>(HttpStatusCode expectedStatusCode = HttpStatusCode.OK) where TResponseDataModel : new()
+        public async Task<RestResponse<List<TResponseDataModel>>> ReadListAsync<TResponseDataModel>(HttpStatusCode expectedStatusCode = HttpStatusCode.OK) where TResponseDataModel : new()
         {
             return await DoRequestAsync<List<TResponseDataModel>>(
                 async (requestUri) =>
@@ -355,8 +358,6 @@ namespace NU2Rest
 
         private void UseAuthentication(RestAuthentication authenticationType, string credentials)
         {
-            string authorization = string.Empty;
-
             switch (authenticationType)
             {
                 case RestAuthentication.BEARER:

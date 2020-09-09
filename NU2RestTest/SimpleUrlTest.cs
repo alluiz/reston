@@ -11,12 +11,12 @@ namespace NU2RestTest
 {
     public class SimpleUrlTest
     {
+        private readonly HttpClientDecorator httpClient = new HttpClientDecorator();
+
         [Fact]
         public void SimpleUrlWithHttpRequestTest()
         {
             string url = "http://domain.com";
-
-            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
 
             IRestRequest request = new RestRequest(url, httpClient, new RestResponseEngine());
 
@@ -32,8 +32,6 @@ namespace NU2RestTest
         {
             string url = "http://subdomain.domain.com";
 
-            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
-
             IRestRequest request = new RestRequest(url, httpClient, new RestResponseEngine());
 
             Assert.Equal("subdomain.domain.com", request.Host);
@@ -47,8 +45,6 @@ namespace NU2RestTest
         public void SimpleUrlWithHttpsAndSubDomainRequestTest()
         {
             string url = "https://subdomain.domain.com";
-
-            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
 
             IRestRequest request = new RestRequest(url, httpClient, new RestResponseEngine());
 
@@ -64,8 +60,6 @@ namespace NU2RestTest
         {
             string url = "https://domain.com";
 
-            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
-
             IRestRequest request = new RestRequest(url, httpClient, new RestResponseEngine());
 
             Assert.Equal("domain.com", request.Host);
@@ -79,8 +73,6 @@ namespace NU2RestTest
         public void SimpleUrlWithHttpAndPortRequestTest()
         {
             string url = "http://domain.com:8075";
-
-            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
 
             IRestRequest request = new RestRequest(url, httpClient, new RestResponseEngine());
 
@@ -96,8 +88,6 @@ namespace NU2RestTest
         {
             string url = "https://domain.com:8075";
 
-            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
-
             IRestRequest request = new RestRequest(url, httpClient, new RestResponseEngine());
 
             Assert.Equal("domain.com", request.Host);
@@ -111,8 +101,6 @@ namespace NU2RestTest
         public void SimpleUrlWithHttpAndPathRequestTest()
         {
             string url = "http://domain.com/path";
-
-            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
 
             IRestRequest request = new RestRequest(url, httpClient, new RestResponseEngine());
 
@@ -128,8 +116,6 @@ namespace NU2RestTest
         {
             string url = "https://domain.com/path";
 
-            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
-
             IRestRequest request = new RestRequest(url, httpClient, new RestResponseEngine());
 
             Assert.Equal("domain.com", request.Host);
@@ -144,8 +130,6 @@ namespace NU2RestTest
         {
             string url = "http://domain.com:8075/path";
 
-            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
-
             IRestRequest request = new RestRequest(url, httpClient, new RestResponseEngine());
 
             Assert.Equal("domain.com", request.Host);
@@ -159,8 +143,6 @@ namespace NU2RestTest
         public void SimpleUrlWithHttpsAndPortAndPathRequestTest()
         {
             string url = "https://domain.com:8075/path";
-
-            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
 
             IRestRequest request = new RestRequest(url, httpClient, new RestResponseEngine());
 

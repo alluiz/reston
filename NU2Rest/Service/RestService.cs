@@ -26,13 +26,13 @@ namespace NU2Rest
 
         public RestScheme Scheme { get; set; }
 
-        private HttpClient httpClient;
-        private HttpClient HttpClient
+        private IHttpClientDecorator httpClient;
+        private IHttpClientDecorator HttpClient
         {
             get
             {
                 if (httpClient == null)
-                    httpClient = new HttpClient();
+                    httpClient = new HttpClientDecorator();
 
                 return httpClient;
             }

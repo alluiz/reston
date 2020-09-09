@@ -11,13 +11,13 @@ namespace NU2RestTest
 {
     public class ComplexUrlTest
     {
+        private readonly HttpClientDecorator httpClient = new HttpClientDecorator();
+
         [Fact]
         public void ComplexUrlWithHttpRequestTest()
         {
             string host = "domain.com";
             string path = "/";
-
-            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
 
             IRestRequest request = new RestRequest(host, path, httpClient, new RestResponseEngine());
 
@@ -34,8 +34,6 @@ namespace NU2RestTest
             string host = "domain.com";
             string path = "";
 
-            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
-
             IRestRequest request = new RestRequest(host, path, httpClient, new RestResponseEngine());
 
             Assert.Equal("domain.com", request.Host);
@@ -51,8 +49,6 @@ namespace NU2RestTest
             string host = "subdomain.domain.com";
             string path = "";
 
-            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
-
             IRestRequest request = new RestRequest(host, path, httpClient, new RestResponseEngine());
 
             Assert.Equal("subdomain.domain.com", request.Host);
@@ -67,8 +63,6 @@ namespace NU2RestTest
         {
             string host = "subdomain.domain.com";
             string path = "";
-
-            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
 
             IRestRequest request = new RestRequest(host, path, httpClient, new RestResponseEngine());
 
@@ -86,8 +80,6 @@ namespace NU2RestTest
         {
             string host = "domain.com";
             string path = "";
-
-            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
 
             IRestRequest request = new RestRequest(host, path, httpClient, new RestResponseEngine());
 
@@ -107,8 +99,6 @@ namespace NU2RestTest
             int port = 8075;
             string path = "";
 
-            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
-
             IRestRequest request = new RestRequest(host, port, path, httpClient, new RestResponseEngine());
 
             Assert.Equal("domain.com", request.Host);
@@ -124,8 +114,6 @@ namespace NU2RestTest
             string host = "domain.com";
             int port = 8075;
             string path = "";
-
-            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
 
             IRestRequest request = new RestRequest(host, port, path, httpClient, new RestResponseEngine());
 
@@ -144,8 +132,6 @@ namespace NU2RestTest
             string host = "domain.com";
             string path = "/path";
 
-            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
-
             IRestRequest request = new RestRequest(host, path, httpClient, new RestResponseEngine());
 
             Assert.Equal("domain.com", request.Host);
@@ -160,8 +146,6 @@ namespace NU2RestTest
         {
             string host = "domain.com";
             string path = "/path";
-
-            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
 
             IRestRequest request = new RestRequest(host, path, httpClient, new RestResponseEngine());
 
@@ -179,8 +163,6 @@ namespace NU2RestTest
         {
             string host = "domain.com"; int port = 8075; string path = "/path";
 
-            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
-
             IRestRequest request = new RestRequest(host, port, path, httpClient, new RestResponseEngine());
 
             Assert.Equal("domain.com", request.Host);
@@ -194,8 +176,6 @@ namespace NU2RestTest
         public void ComplexUrlWithHttpsAndPortAndPathRequestTest()
         {
             string host = "domain.com"; int port = 8075; string path = "/path";
-
-            HttpClient httpClient = new HttpClient(new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK));
 
             IRestRequest request = new RestRequest(host, port, path, httpClient, new RestResponseEngine());
 

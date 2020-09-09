@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
@@ -8,7 +10,7 @@ namespace NU2Rest
     public interface IRestRequest
     {
         string Path { get; set; }
-        Dictionary<string, IEnumerable<string>> Headers { get; }
+        HttpRequestHeaders Headers { get; }
         Dictionary<string, string> Params { get; }
         Dictionary<string, string> QueryParams { get; }
         int Port { get; set; }
@@ -23,6 +25,6 @@ namespace NU2Rest
         void UseBasicAuthentication(string username, string password);
         Task<RestResponse<TResponseDataModel>> UpdatePartialAsync<TRequestDataModel, TResponseDataModel>(TRequestDataModel data, HttpStatusCode expectedStatusCode = HttpStatusCode.OK, JsonSerializerSettings settings = null) where TResponseDataModel : new();
         void UseHttps();
-        Task<RestResponse<List<TResponseDataModel>>> ReadAllAsync<TResponseDataModel>(HttpStatusCode expectedStatusCode = HttpStatusCode.OK) where TResponseDataModel : new();
+        Task<RestResponse<List<TResponseDataModel>>> ReadListAsync<TResponseDataModel>(HttpStatusCode expectedStatusCode = HttpStatusCode.OK) where TResponseDataModel : new();
     }
 }
