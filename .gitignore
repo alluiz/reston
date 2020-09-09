@@ -1,4 +1,5 @@
 */bin
 */obj
 .vscode
-/.vs/NU2Rest/v16
+/.vs/*
+NU2RestApp/Program.cs
