@@ -1,97 +1,99 @@
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using System;
 using System.Net.Http;
 
 namespace NU2Rest
 {
     public interface IRestService
     {
+        /// <summary>
+        /// The scheme will be used in the requests. HTTP (default) or HTTPS
+        /// </summary>
         RestScheme Scheme { get; set; }
 
-        IRestRequest CreateRequest(string host, string path);
+        /// <summary>
+        /// Create RestRequest instance
+        /// </summary>
+        /// <param name="host">The host server. Eg.: domain.com</param>
+        /// <param name="path">The path param. Eg.: /test</param>
+        /// <returns>A new RestRequest instance</returns>
+        IRestRequest CreateRestRequest(string host, string path);
+
+        /// <summary>
+        /// Create RestRequest instance
+        /// </summary>
+        /// <param name="url">The full URL. Eg.: https://domain.com/test</param>
+        /// <returns>A new RestRequest instance</returns>
         IRestRequest CreateRequest(string url);
+
+        /// <summary>
+        /// Create RestRequest instance
+        /// </summary>
+        /// <param name="host">The host server. Eg.: domain.com</param>
+        /// <param name="port">The server port. Eg.: 443</param>
+        /// <param name="path">The path param. Eg.: /test</param>
+        /// <returns>A new RestRequest instance</returns>
         IRestRequest CreateRequest(string host, int port, string path);
-        void setSchemeDefault(IRestRequest request);
     }
 
-    public class RestService : IRestService
+    public class RestService : BaseService, IRestService
     {
-        public RestService(RestScheme scheme)
+        /// <summary>
+        /// New instance Rest Service. Specify the scheme that will be used 
+        /// </summary>
+        /// <param name="scheme">The scheme will be used in the requests. HTTP (default) or HTTPS</param>
+        public RestService(RestScheme scheme): base(scheme)
         {
-            Scheme = scheme;
         }
 
-        public RestService()
+        /// <summary>
+        /// New instance Rest Service. Uses HTTP Scheme by default
+        /// </summary>
+        public RestService() : base(RestScheme.HTTP)
         {
-            Scheme = RestScheme.HTTP;
         }
 
-        public RestScheme Scheme { get; set; }
-
-        private IHttpClientDecorator httpClient;
-        private IHttpClientDecorator HttpClient
-        {
-            get
-            {
-                if (httpClient == null)
-                    httpClient = new HttpClientDecorator();
-
-                return httpClient;
-            }
-        }
-
-        private RestResponseEngine responseEngine;
-        private RestResponseEngine ResponseEngine
-        {
-            get
-            {
-                if (responseEngine == null)
-                    responseEngine = new RestResponseEngine();
-
-                return responseEngine;
-            }
-        }
-
-        public IRestRequest CreateRequest(string host, string path)
+        /// <summary>
+        /// Create RestRequest instance
+        /// </summary>
+        /// <param name="host">The host server. Eg.: domain.com</param>
+        /// <param name="path">The path param. Eg.: /test</param>
+        /// <returns>A new RestRequest instance</returns>
+        public IRestRequest CreateRestRequest(string host, string path)
         {
             IRestRequest request = new RestRequest(host, path, HttpClient, ResponseEngine);
-            setSchemeDefault(request);
+            SetSchemeDefault(request);
 
             return request;
         }
 
+        /// <summary>
+        /// Create RestRequest instance
+        /// </summary>
+        /// <param name="url">The full URL. Eg.: https://domain.com/test</param>
+        /// <returns>A new RestRequest instance</returns>
         public IRestRequest CreateRequest(string url)
         {
             IRestRequest request = new RestRequest(url, HttpClient, ResponseEngine);
-            setSchemeDefault(request);
+            SetSchemeDefault(request);
 
             return request;
         }
 
+        /// <summary>
+        /// Create RestRequest instance
+        /// </summary>
+        /// <param name="host">The host server. Eg.: domain.com</param>
+        /// <param name="port">The server port. Eg.: 443</param>
+        /// <param name="path">The path param. Eg.: /test</param>
+        /// <returns>A new RestRequest instance</returns>
         public IRestRequest CreateRequest(string host, int port, string path)
         {
             IRestRequest request = new RestRequest(host, port, path, HttpClient, ResponseEngine);
-            setSchemeDefault(request);
+            SetSchemeDefault(request);
 
             return request;
-        }
-
-        public void setSchemeDefault(IRestRequest request)
-        {
-            switch (Scheme)
-            {
-                case RestScheme.HTTP:
-                    {
-                        break;
-                    }
-                case RestScheme.HTTPS:
-                    {
-                        request.UseHttps();
-                        break;
-                    }
-                default:
-                    {
-                        break;
-                    }
-            }
         }
     }
 }

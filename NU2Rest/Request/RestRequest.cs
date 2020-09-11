@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using NU2Rest.OAuth2;
 
 namespace NU2Rest
 {
@@ -202,7 +203,7 @@ namespace NU2Rest
                 Console.WriteLine(ex.ToString());
                 throw;
             }
-            catch (System.Exception ex)
+            catch (System.Exception)
             {
                 throw;
             }
@@ -351,9 +352,9 @@ namespace NU2Rest
             return query;
         }
 
-        public void UseBearerAuthentication(string access_token)
+        public void UseBearerAuthentication(OAuth2Token token)
         {
-            UseAuthentication(RestAuthentication.BEARER, access_token);
+            UseAuthentication(RestAuthentication.BEARER, token.Access_Token);
         }
 
         private void UseAuthentication(RestAuthentication authenticationType, string credentials)
