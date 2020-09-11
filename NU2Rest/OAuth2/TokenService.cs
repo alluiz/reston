@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Serialization;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -7,68 +8,71 @@ namespace NU2Rest.OAuth2
 {
     public class TokenService : BaseService, ITokenService
     {
-        private OAuth2Token localToken;
+        private OAuth2Token token;
+        private IRestRequest requestToken;
+        private JsonSerializerSettings jsonSerializerSettings;
 
-        public TokenService(string url) : base(RestScheme.HTTPS)
+        public TokenService(TokenServiceProvider tokenServiceProvider) : base(RestScheme.HTTPS)
         {
-            Url = url;
+            TokenServiceProvider = tokenServiceProvider;
         }
 
-        public string Url { get; set; }
+        public TokenServiceProvider TokenServiceProvider { get; set; }
 
-        public IRestRequest CreateRequest()
+        private IRestRequest GetRequestToken()
         {
-            IRestRequest request = new RestRequest(Url, HttpClient, ResponseEngine);
-            SetSchemeDefault(request);
+            if (requestToken == null)
+            {
+                requestToken = new RestRequest(TokenServiceProvider.TokenUrl, HttpClient, ResponseEngine);
+                SetSchemeDefault(requestToken);
+            }
 
-            return request;
+            return requestToken;
         }
 
         public OAuth2Token GetResourceOwnerToken(ResourceOwnerCredentials resourceOwnerCredentials)
         {
-            bool validToken = ValidateLocalToken();
+            bool validToken = ValidateToken();
 
             if (!validToken)
-                localToken = CallTokenServiceProvider(resourceOwnerCredentials);
+                token = CallTokenServiceProvider(resourceOwnerCredentials);
 
-            return localToken;
+            return token;
         }
 
-        private bool ValidateLocalToken()
+        private bool ValidateToken()
         {
             return false;
         }
 
         private OAuth2Token CallTokenServiceProvider(ResourceOwnerCredentials resourceOwnerCredentials)
         {
-            IRestRequest request = CreateRequest(Url);
+            IRestRequest requestToken = GetRequestToken();
+            JsonSerializerSettings jsonSerializerSettings = GetJsonSerializerSettings();
 
-            Newtonsoft.Json.JsonSerializerSettings jsonSerializerSettings = new Newtonsoft.Json.JsonSerializerSettings
-            {
-                ContractResolver = new DefaultContractResolver()
-                {
-                    NamingStrategy = new SnakeCaseNamingStrategy()
-                }
-            };
+            RestResponse<OAuth2Token> response = requestToken.CreateAsync<ResourceOwnerCredentials, OAuth2Token>(resourceOwnerCredentials, System.Net.HttpStatusCode.OK, jsonSerializerSettings).Result;
 
-            RestResponse<OAuth2Token> response = request.CreateAsync<ResourceOwnerCredentials, OAuth2Token>(resourceOwnerCredentials, System.Net.HttpStatusCode.OK, jsonSerializerSettings).Result;
+            Console.WriteLine(response.MetaData.ToJsonString());
 
             OAuth2Token token = response.Data;
 
             return token;
         }
 
-        /// <summary>
-        /// Create RestRequest instance
-        /// </summary>
-        /// <param name="url">The full URL. Eg.: https://domain.com/test</param>
-        /// <returns>A new RestRequest instance</returns>
-        public IRestRequest CreateRequest(string url)
+        private JsonSerializerSettings GetJsonSerializerSettings()
         {
-            IRestRequest request = new RestRequest(url, HttpClient, ResponseEngine);
-            SetSchemeDefault(request);
+            if (jsonSerializerSettings == null)
+            {
+                jsonSerializerSettings = new Newtonsoft.Json.JsonSerializerSettings
+                {
+                    ContractResolver = new DefaultContractResolver()
+                    {
+                        NamingStrategy = new SnakeCaseNamingStrategy()
+                    }
+                };
+            }
 
-            return request;
+            return jsonSerializerSettings;
         }
     }
 }

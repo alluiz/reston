@@ -20,9 +20,9 @@ namespace NU2Rest
             return services;
         }
 
-        public static IServiceCollection AddTokenService(this IServiceCollection services, string url)
+        public static IServiceCollection AddTokenService(this IServiceCollection services, TokenServiceProvider tokenServiceProvider)
         {
-            services.AddSingleton<ITokenService>(x => new TokenService(url));
+            services.AddSingleton<ITokenService>(x => new TokenService(tokenServiceProvider));
 
             return services;
         }

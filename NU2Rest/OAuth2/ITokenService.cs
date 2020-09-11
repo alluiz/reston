@@ -2,10 +2,7 @@
 {
     public interface ITokenService
     {
-        string Url { get; set; }
-
-        IRestRequest CreateRequest();
-        IRestRequest CreateRequest(string url);
+        TokenServiceProvider TokenServiceProvider { get; set; }
         OAuth2Token GetResourceOwnerToken(ResourceOwnerCredentials resourceOwnerCredentials);
     }
 }
