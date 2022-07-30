@@ -43,7 +43,7 @@ namespace RestOn
         /// <value>
         /// REST Response engine object for process responses
         /// </value>
-        private readonly IRestResponseEngine responseEngine;
+        private readonly IRestResponseEngine _responseEngine;
 
         /// <value>
         /// Headers that will be sent into the REST request
@@ -122,7 +122,7 @@ namespace RestOn
             Scheme = HTTP_SCHEME_DEFAULT;
 
             this._httpClient = httpClient;
-            this.responseEngine = responseEngine;
+            this._responseEngine = responseEngine;
 
             InitProperties();
         }
@@ -142,7 +142,7 @@ namespace RestOn
             Scheme = HTTP_SCHEME_DEFAULT;
 
             this._httpClient = httpClient;
-            this.responseEngine = responseEngine;
+            this._responseEngine = responseEngine;
 
             InitProperties();
         }
@@ -163,7 +163,7 @@ namespace RestOn
             Scheme = uri.Scheme;
 
             this._httpClient = httpClient;
-            this.responseEngine = responseEngine;
+            this._responseEngine = responseEngine;
 
             InitProperties();
         }
@@ -175,7 +175,7 @@ namespace RestOn
         /// <param name="data"><c>TRequestDataModel</c> object</param>
         /// <param name="settings"></param>
         /// <returns>A string in json format</returns>
-        private StringContent GetContentBody<TRequestDataModel>(TRequestDataModel data, JsonSerializerSettings settings)
+        public StringContent GetContentBody<TRequestDataModel>(TRequestDataModel data, JsonSerializerSettings settings)
         {
             settings = CheckJsonSerializerSettings(settings);
             string jsonBody = Newtonsoft.Json.JsonConvert.SerializeObject(data, Formatting.Indented, settings);
@@ -189,7 +189,7 @@ namespace RestOn
         /// </summary>
         /// <param name="data"><c>Dictionary<string, string></c> object</param>
         /// <returns>A string in application/x-www-form-urlencoded format</returns>
-        private StringContent GetContentBody(Dictionary<string, string> data)
+        public StringContent GetContentBody(Dictionary<string, string> data)
         {
             return GetContentBody(ProcessParams(data), "application/x-www-form-urlencoded");
         }
@@ -199,33 +199,9 @@ namespace RestOn
         /// </summary>
         /// <param name="data"><c>Dictionary<string, string></c> object</param>
         /// <returns>A string in application/x-www-form-urlencoded format</returns>
-        private StringContent GetContentBody(string data, string contentType)
+        public StringContent GetContentBody(string data, string contentType)
         {
             return new StringContent(data, Encoding.UTF8, contentType);
-        }
-
-        private async Task<RestResponse<TResponseDataModel>> DoRequestAsync<TResponseDataModel>(Func<Uri, IHttpClientDecorator, Task<HttpResponseMessage>> requestAsync, HttpStatusCode expectedStatusCode)
-        {
-            try
-            {
-                Uri requestUri = GetRequestUri();
-
-                HttpResponseMessage responseMessage = await requestAsync(requestUri, _httpClient);
-
-                RestResponse<TResponseDataModel> response = await responseEngine
-                    .ProcessMessageAsync<TResponseDataModel>(responseMessage, expectedStatusCode);
-
-                return response;
-            }
-            catch (RestException ex)
-            {
-                Console.WriteLine(ex.ToString());
-                throw;
-            }
-            catch (System.Exception)
-            {
-                throw;
-            }
         }
 
         public async Task<RestResponse<List<TResponseDataModel>>> GetListAsync<TResponseDataModel>(HttpStatusCode expectedStatusCode = HttpStatusCode.OK)
@@ -310,26 +286,43 @@ namespace RestOn
 
         public async Task<RestResponse<TResponseDataModel>> SendAsync<TResponseDataModel>(StringContent content, HttpStatusCode expectedStatusCode, HttpMethod method)
         {
-            return await DoRequestAsync<TResponseDataModel>(
-                async (requestUri, client) =>
-                {
+            try
+            {
+                HttpResponseMessage responseMessage = await SendAsync(content, method);
 
-                    switch (method.Method)
+                RestResponse<TResponseDataModel> response = await _responseEngine
+                    .ProcessMessageAsync<TResponseDataModel>(responseMessage, expectedStatusCode);
+
+                return response;
+            }
+            catch (RestException ex)
+            {
+                Console.WriteLine(ex.ToString());
+                throw;
+            }
+            catch (System.Exception)
+            {
+                throw;
+            }
+        }
+
+        private async Task<HttpResponseMessage> SendAsync(StringContent content, HttpMethod method)
+        {
+            Uri requestUri = GetRequestUri();
+
+            switch (method.Method)
+            {
+                case "GET":
+                    return await _httpClient.GetAsync(requestUri);
+                case "POST":
+                    return await _httpClient.PostAsync(requestUri, content);
+                default: 
                     {
-                        case "GET":
-                            return await client.GetAsync(requestUri);
-                        case "POST":
-                            return await client.PostAsync(requestUri, content);
-                        default: 
-                            {
-                                var message = new HttpRequestMessage(method, requestUri);
-                                message.Content = content;
-                                return await client.SendAsync(message);
-                            }
+                        var message = new HttpRequestMessage(method, requestUri);
+                        message.Content = content;
+                        return await _httpClient.SendAsync(message);
                     }
-
-                    
-                }, expectedStatusCode);
+            }
         }
 
         private JsonSerializerSettings CheckJsonSerializerSettings(JsonSerializerSettings settings)
