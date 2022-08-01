@@ -1,3 +1,4 @@
+using System;
 using RestOn.Http;
 
 namespace RestOn.Service
@@ -23,6 +24,13 @@ namespace RestOn.Service
         /// <param name="url">The full URL. Eg.: https://domain.com/test</param>
         /// <returns>A new RestRequest instance</returns>
         IRestRequest CreateRequest(string url);
+        
+        /// <summary>
+        /// Create RestRequest instance
+        /// </summary>
+        /// <param name="uri">The full URL. Eg.: https://domain.com/test</param>
+        /// <returns>A new RestRequest instance</returns>
+        IRestRequest CreateRequest(Uri uri);
 
         /// <summary>
         /// Create RestRequest instance

@@ -50,6 +50,14 @@ namespace RestOn.Service
             return request;
         }
 
+        public IRestRequest CreateRequest(Uri uri)
+        {
+            IRestRequest request = new RestRequest(uri, HttpClient, ResponseEngine);
+            SetSchemeDefault(request);
+
+            return request;
+        }
+
         /// <summary>
         /// Create RestRequest instance
         /// </summary>

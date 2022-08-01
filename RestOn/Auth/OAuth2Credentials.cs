@@ -2,15 +2,13 @@
 {
     public class OAuth2Credentials
     {
-        private readonly string grant_type;
-
-        public OAuth2Credentials(string grant_type)
+        public OAuth2Credentials(string clientId, string clientSecret)
         {
-            this.grant_type = grant_type;
+            this.ClientId = clientId;
+            this.ClientSecret = clientSecret;
         }
 
-        public string Grant_type => grant_type;
-
-        public string Scope { get; set; }
+        public string ClientId { get; set; }
+        public string ClientSecret { get; set; }
     }
 }

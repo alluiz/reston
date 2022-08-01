@@ -167,6 +167,25 @@ namespace RestOn
 
             InitProperties();
         }
+        
+        /// <summary>
+        /// Create a REST request instance
+        /// </summary>
+        /// <param name="uri">The URI</param>
+        /// <param name="httpClient">The HTTP Client instance</param>
+        /// <param name="responseEngine">The REST response engine instance</param>
+        public RestRequest(Uri uri, IHttpClientDecorator httpClient, IRestResponseEngine responseEngine)
+        {
+            Host = uri.Host;
+            Port = uri.Port;
+            Path = uri.AbsolutePath;
+            Scheme = uri.Scheme;
+
+            this._httpClient = httpClient;
+            this._responseEngine = responseEngine;
+
+            InitProperties();
+        }
 
         /// <summary>
         /// Converts the <paramref name="data"/> in json format
@@ -316,7 +335,7 @@ namespace RestOn
                     return await _httpClient.GetAsync(requestUri);
                 case "POST":
                     return await _httpClient.PostAsync(requestUri, content);
-                default: 
+                default:
                     {
                         var message = new HttpRequestMessage(method, requestUri);
                         message.Content = content;
@@ -389,9 +408,9 @@ namespace RestOn
                     string value = param.Value;
 
                     if (!string.IsNullOrEmpty(query))
-                        query = query + '&';
+                        query = $"{query}&";
 
-                    query = query + key + '=' + value;
+                    query = $"{query}{key}={value}";
                 }
             }
 
@@ -409,12 +428,12 @@ namespace RestOn
             {
                 case RestAuthentication.BEARER:
                     {
-                        _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", credentials);
+                        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", credentials);
                         break;
                     }
                 case RestAuthentication.BASIC:
                     {
-                        _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", credentials);
+                        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credentials);
                         break;
                     }
                 default:
@@ -423,6 +442,11 @@ namespace RestOn
                     }
             }
 
+        }
+
+        public void UseAuthentication(string authenticationType, string credentials)
+        {
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(authenticationType, credentials);
         }
 
         public void UseBasicAuthentication(string username, string password)

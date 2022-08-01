@@ -21,9 +21,9 @@ namespace RestOn.Service
             return services;
         }
 
-        public static IServiceCollection AddTokenService(this IServiceCollection services, TokenServiceProvider tokenServiceProvider)
+        public static IServiceCollection AddTokenService(this IServiceCollection services, OAuth2Endpoints endpoints, IRestService restService)
         {
-            services.AddSingleton<ITokenService>(x => new TokenService(tokenServiceProvider));
+            services.AddSingleton<IIdentityProviderService>(x => new IdentityProviderService(endpoints, restService));
 
             return services;
         }
