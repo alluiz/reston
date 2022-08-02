@@ -1,24 +1,41 @@
 ﻿using System.Collections.Generic;
 using System;
-using System.Threading.Tasks;
-using RestOn.Service;
 using System.Net;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using RestOn.Service;
 
 namespace RestOn.Auth
 {
-    public class IdentityProviderService : IIdentityProviderService
+    public class IdentityService : IIdentityProvider
     {
-        private readonly IRestRequest requestToken;
-        private readonly IRestRequest introspectToken;
-        public OAuth2Credentials Credentials { private get; set; }
-        public IdentityProviderService(OAuth2Endpoints endpoints, IRestService restService)
+        private readonly IRestService apiService;
+
+        public Uri TokenIntrospectionUri { get; set; }
+        public Uri TokenUri { get; set; }
+        public OAuth2Credentials Credentials { get; set; }
+        
+        /// <summary>
+        /// Create a new IdentityService instance
+        /// </summary>
+        /// <param name="endpoints">The OAuth2 endpoints</param>
+        /// <param name="apiService">The apiService for connect to IdP</param>
+        public IdentityService(OAuth2Endpoints endpoints, IRestService apiService)
         {
-            this.requestToken = restService.CreateRequest(endpoints.TokenUri);
-            this.introspectToken = restService.CreateRequest(endpoints.TokenIntrospectionUri);
+            this.TokenUri = endpoints.TokenUri;
+            this.TokenIntrospectionUri = endpoints.TokenIntrospectionUri;
+            this.apiService = apiService;
         }
         
-        public IdentityProviderService(OAuth2Endpoints endpoints, OAuth2Credentials credentials, IRestService restService): 
-            this(endpoints, restService)
+        /// <summary>
+        /// Create a new IdentityService instance
+        /// </summary>
+        /// <param name="endpoints">The OAuth2 endpoints</param>
+        /// <param name="credentials">The OAuth2 client credentials</param>
+        /// <param name="apiService">The apiService for connect to IdP</param>
+        public IdentityService(OAuth2Endpoints endpoints, OAuth2Credentials credentials, IRestService apiService): 
+            this(endpoints, apiService)
         {
             this.Credentials = credentials;
         }
@@ -26,13 +43,15 @@ namespace RestOn.Auth
         public async Task<bool> ValidateToken(OAuth2Token token)
         {
             var data = new Dictionary<string, string>();
-            data.Add("access_token", token.Access_Token);
+            data.Add("access_token", token.AccessToken);
             
-            var response = await requestToken.PostAsync<OAuth2TokenInstrospection>(data, HttpStatusCode.OK);
+            var response = await apiService
+                .CreateRequest(TokenIntrospectionUri)
+                .PostAsync<OAuth2TokenInstrospection>(data, HttpStatusCode.OK);
 
             return response.Data.Active;
         }
-        public async Task<OAuth2Token> GetToken(OpenIdConnectCredentials oidcCredentials)
+        public async Task<OAuth2Token> ExchangeForToken(OpenIdConnectCredentials oidcCredentials)
         {
             var data = new Dictionary<string, string>();
             data.Add("grant_type", "authorization_code");
@@ -45,7 +64,7 @@ namespace RestOn.Auth
         {
             var data = new Dictionary<string, string>();
             data.Add("grant_type", "refresh_token");
-            data.Add("refresh_token", token.Refresh_Token);
+            data.Add("refresh_token", token.RefreshToken);
             
             return await GetToken(data);
         }
@@ -67,9 +86,12 @@ namespace RestOn.Auth
         }
         private async Task<OAuth2Token> GetToken(Dictionary<string, string> data)
         {
+            
             data.Add("client_id", Credentials.ClientId);
             data.Add("client_secret", Credentials.ClientSecret);
-            var response = await requestToken.PostAsync<OAuth2Token>(data, HttpStatusCode.OK);
+            var response = await apiService
+                .CreateRequest(TokenUri)
+                .PostAsync<OAuth2Token>(data, HttpStatusCode.OK);
 
             return response.Data;
         }

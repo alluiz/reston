@@ -8,7 +8,7 @@
             this.ClientSecret = clientSecret;
         }
 
-        public string ClientId { get; set; }
-        public string ClientSecret { get; set; }
+        public string ClientId { get; }
+        public string ClientSecret { get; }
     }
 }

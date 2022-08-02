@@ -10,7 +10,9 @@ namespace RestOn
 {
     public class RestResponseEngine : IRestResponseEngine
     {
-        public async Task<RestResponse<TResponseDataModel>> ProcessMessageAsync<TResponseDataModel>(HttpResponseMessage responseMessage, HttpStatusCode expectedStatusCode) 
+        public async Task<RestResponse<TResponseDataModel>> ProcessMessageAsync<TResponseDataModel>(
+            HttpResponseMessage responseMessage, 
+            HttpStatusCode expectedStatusCode) 
         {
             RestResponse<TResponseDataModel> response = new RestResponse<TResponseDataModel>();
 

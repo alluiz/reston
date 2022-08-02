@@ -19,9 +19,8 @@ namespace RestOn
 
         public override string ToString()
         {
-            return base.ToString() + Environment.NewLine +
-                $"----> ResponseMetaData in JSON format:" + Environment.NewLine +
-                $"{Response.ToJsonString()}";
+            return
+                $"{base.ToString()}{Environment.NewLine}----> ResponseMetaData in JSON format:{Environment.NewLine}{Response.ToJsonString()}";
         }
     }
 }

@@ -31,11 +31,6 @@ namespace RestOn
         private const string HTTP_SCHEME_DEFAULT = "http";
 
         /// <value>
-        /// Default JSON Serializer settings. Null values will be ignored.
-        /// </value>
-        private JsonSerializerSettings defaultSettings;
-
-        /// <value>
         /// HTTP Client singleton instance
         /// </value>
         private readonly IHttpClientDecorator _httpClient;
@@ -44,6 +39,11 @@ namespace RestOn
         /// REST Response engine object for process responses
         /// </value>
         private readonly IRestResponseEngine _responseEngine;
+
+        /// <summary>
+        /// The content-type to be used
+        /// </summary>
+        private MediaTypeHeaderValue contentType;
 
         /// <value>
         /// Headers that will be sent into the REST request
@@ -90,20 +90,6 @@ namespace RestOn
         {
             Params = new Dictionary<string, string>();
             QueryParams = new Dictionary<string, string>();
-            defaultSettings = InitJsonDefaultSettings();
-        }
-
-        /// <summary>
-        /// Initialize JSON Default settings
-        /// </summary>
-        /// <returns>The JSON Serializer default settings</returns>
-        private JsonSerializerSettings InitJsonDefaultSettings()
-        {
-            JsonSerializerSettings settings = new JsonSerializerSettings();
-            settings.ContractResolver = new CamelCasePropertyNamesContractResolver();
-            settings.NullValueHandling = NullValueHandling.Ignore;
-
-            return settings;
         }
 
         /// <summary>
@@ -194,10 +180,9 @@ namespace RestOn
         /// <param name="data"><c>TRequestDataModel</c> object</param>
         /// <param name="settings"></param>
         /// <returns>A string in json format</returns>
-        public StringContent GetContentBody<TRequestDataModel>(TRequestDataModel data, JsonSerializerSettings settings)
+        private StringContent GetContentBody<TRequestDataModel>(TRequestDataModel data)
         {
-            settings = CheckJsonSerializerSettings(settings);
-            string jsonBody = Newtonsoft.Json.JsonConvert.SerializeObject(data, Formatting.Indented, settings);
+            string jsonBody = Newtonsoft.Json.JsonConvert.SerializeObject(data, Formatting.Indented);
             StringContent content = GetContentBody(jsonBody, "application/json");
 
             return content;
@@ -206,21 +191,16 @@ namespace RestOn
         /// <summary>
         /// /// Converts the <paramref name="data"/> in application/x-www-form-urlencoded
         /// </summary>
-        /// <param name="data"><c>Dictionary<string, string></c> object</param>
+        /// <param name="data"><c>Dictionary</c> object</param>
         /// <returns>A string in application/x-www-form-urlencoded format</returns>
-        public StringContent GetContentBody(Dictionary<string, string> data)
+        private StringContent GetContentBody(Dictionary<string, string> data)
         {
             return GetContentBody(ProcessParams(data), "application/x-www-form-urlencoded");
         }
 
-        /// <summary>
-        /// /// Converts the <paramref name="data"/> in application/x-www-form-urlencoded
-        /// </summary>
-        /// <param name="data"><c>Dictionary<string, string></c> object</param>
-        /// <returns>A string in application/x-www-form-urlencoded format</returns>
-        public StringContent GetContentBody(string data, string contentType)
+        private StringContent GetContentBody(string data, string contentTypeText)
         {
-            return new StringContent(data, Encoding.UTF8, contentType);
+            return new StringContent(data, Encoding.UTF8, contentTypeText);
         }
 
         public async Task<RestResponse<List<TResponseDataModel>>> GetListAsync<TResponseDataModel>(HttpStatusCode expectedStatusCode = HttpStatusCode.OK)
@@ -238,9 +218,9 @@ namespace RestOn
             return await SendAsync<TResponseDataModel>(content, expectedStatusCode, HttpMethod.Post);
         }
 
-        public async Task<RestResponse<TResponseDataModel>> PostAsync<TRequestDataModel, TResponseDataModel>(TRequestDataModel data, HttpStatusCode expectedStatusCode = HttpStatusCode.Created, JsonSerializerSettings settings = null)
+        public async Task<RestResponse<TResponseDataModel>> PostAsync<TRequestDataModel, TResponseDataModel>(TRequestDataModel data, HttpStatusCode expectedStatusCode = HttpStatusCode.Created)
         {
-            return await PostAsync<TResponseDataModel>(GetContentBody<TRequestDataModel>(data, settings), expectedStatusCode);
+            return await PostAsync<TResponseDataModel>(GetContentBody(data), expectedStatusCode);
         }
 
         public async Task<RestResponse<TResponseDataModel>> PostAsync<TResponseDataModel>(Dictionary<string, string> data, HttpStatusCode expectedStatusCode = HttpStatusCode.Created)
@@ -248,9 +228,9 @@ namespace RestOn
             return await PostAsync<TResponseDataModel>(GetContentBody(data), expectedStatusCode);
         }
 
-        public async Task<RestResponse<TResponseDataModel>> PostAsync<TResponseDataModel>(string data, string contentType, HttpStatusCode expectedStatusCode = HttpStatusCode.Created)
+        public async Task<RestResponse<TResponseDataModel>> PostAsync<TResponseDataModel>(string data, HttpStatusCode expectedStatusCode = HttpStatusCode.Created)
         {
-            return await PostAsync<TResponseDataModel>(GetContentBody(data, contentType), expectedStatusCode);
+            return await PostAsync<TResponseDataModel>(GetContentBody(data, contentType.MediaType), expectedStatusCode);
         }
 
         private async Task<RestResponse<TResponseDataModel>> PutAsync<TResponseDataModel>(StringContent content, HttpStatusCode expectedStatusCode)
@@ -258,19 +238,19 @@ namespace RestOn
             return await SendAsync<TResponseDataModel>(content, expectedStatusCode, HttpMethod.Put);
         }
 
-        public async Task<RestResponse<TResponseDataModel>> PutAsync<TRequestDataModel, TResponseDataModel>(TRequestDataModel data, HttpStatusCode expectedStatusCode = HttpStatusCode.OK, JsonSerializerSettings settings = null)
-        {
-            return await PutAsync<TResponseDataModel>(GetContentBody<TRequestDataModel>(data, settings), expectedStatusCode);
-        }
-
-        public async Task<RestResponse<TResponseDataModel>> PutAsync<TResponseDataModel>(Dictionary<string, string> data, HttpStatusCode expectedStatusCode = HttpStatusCode.OK, JsonSerializerSettings settings = null)
+        public async Task<RestResponse<TResponseDataModel>> PutAsync<TRequestDataModel, TResponseDataModel>(TRequestDataModel data, HttpStatusCode expectedStatusCode = HttpStatusCode.OK)
         {
             return await PutAsync<TResponseDataModel>(GetContentBody(data), expectedStatusCode);
         }
 
-        public async Task<RestResponse<TResponseDataModel>> PutAsync<TResponseDataModel>(string data, string contentType, HttpStatusCode expectedStatusCode = HttpStatusCode.OK, JsonSerializerSettings settings = null)
+        public async Task<RestResponse<TResponseDataModel>> PutAsync<TResponseDataModel>(Dictionary<string, string> data, HttpStatusCode expectedStatusCode = HttpStatusCode.OK)
         {
-            return await PutAsync<TResponseDataModel>(GetContentBody(data, contentType), expectedStatusCode);
+            return await PutAsync<TResponseDataModel>(GetContentBody(data), expectedStatusCode);
+        }
+
+        public async Task<RestResponse<TResponseDataModel>> PutAsync<TResponseDataModel>(string data, HttpStatusCode expectedStatusCode = HttpStatusCode.OK)
+        {
+            return await PutAsync<TResponseDataModel>(GetContentBody(data, contentType.MediaType), expectedStatusCode);
         }
 
         private async Task<RestResponse<TResponseDataModel>> PatchAsync<TResponseDataModel>(StringContent content, HttpStatusCode expectedStatusCode)
@@ -278,9 +258,9 @@ namespace RestOn
             return await SendAsync<TResponseDataModel>(content, expectedStatusCode, HttpMethod.Patch);
         }
 
-        public async Task<RestResponse<TResponseDataModel>> PatchAsync<TRequestDataModel, TResponseDataModel>(TRequestDataModel data, HttpStatusCode expectedStatusCode = HttpStatusCode.OK, JsonSerializerSettings settings = null)
+        public async Task<RestResponse<TResponseDataModel>> PatchAsync<TRequestDataModel, TResponseDataModel>(TRequestDataModel data, HttpStatusCode expectedStatusCode = HttpStatusCode.OK)
         {
-            return await PatchAsync<TResponseDataModel>(GetContentBody<TRequestDataModel>(data, settings), expectedStatusCode);
+            return await PatchAsync<TResponseDataModel>(GetContentBody(data), expectedStatusCode);
         }
 
         public async Task<RestResponse<TResponseDataModel>> PatchAsync<TResponseDataModel>(Dictionary<string, string> data, HttpStatusCode expectedStatusCode = HttpStatusCode.OK)
@@ -288,9 +268,9 @@ namespace RestOn
             return await PatchAsync<TResponseDataModel>(GetContentBody(data), expectedStatusCode);
         }
 
-        public async Task<RestResponse<TResponseDataModel>> PatchAsync<TResponseDataModel>(string data, string contentType, HttpStatusCode expectedStatusCode = HttpStatusCode.OK, JsonSerializerSettings settings = null)
+        public async Task<RestResponse<TResponseDataModel>> PatchAsync<TResponseDataModel>(string data, HttpStatusCode expectedStatusCode = HttpStatusCode.OK)
         {
-            return await PatchAsync<TResponseDataModel>(GetContentBody(data, contentType), expectedStatusCode);
+            return await PatchAsync<TResponseDataModel>(GetContentBody(data, contentType.MediaType), expectedStatusCode);
         }
 
         public async Task<RestResponse<TResponseDataModel>> DeleteAsync<TResponseDataModel>(HttpStatusCode expectedStatusCode = HttpStatusCode.NoContent)
@@ -319,10 +299,6 @@ namespace RestOn
                 Console.WriteLine(ex.ToString());
                 throw;
             }
-            catch (System.Exception)
-            {
-                throw;
-            }
         }
 
         private async Task<HttpResponseMessage> SendAsync(StringContent content, HttpMethod method)
@@ -344,15 +320,7 @@ namespace RestOn
             }
         }
 
-        private JsonSerializerSettings CheckJsonSerializerSettings(JsonSerializerSettings settings)
-        {
-            //if null, set default camelCase
-            settings = settings ?? defaultSettings;
-
-            return settings;
-        }
-
-        public void UseHttps()
+        public IRestRequest UseHttps()
         {
             //Define the scheme to HTTPS
             Scheme = "https";
@@ -360,6 +328,15 @@ namespace RestOn
             //Set the port number ONLY if it's default value 80. Otherwise, maintain the choosed port.
             if (Port == 80)
                 Port = 443;
+
+            return this;
+        }
+
+        public IRestRequest UseContentType(MediaTypeHeaderValue mediaTypeHeaderValue)
+        {
+            this.contentType = mediaTypeHeaderValue;
+
+            return this;
         }
 
         private Uri GetRequestUri()
@@ -417,9 +394,11 @@ namespace RestOn
             return query;
         }
 
-        public void UseBearerAuthentication(OAuth2Token token)
+        public IRestRequest UseBearerAuthentication(OAuth2Token token)
         {
-            UseAuthentication(RestAuthentication.BEARER, token.Access_Token);
+            UseAuthentication(RestAuthentication.BEARER, token.AccessToken);
+
+            return this;
         }
 
         private void UseAuthentication(RestAuthentication authenticationType, string credentials)
@@ -444,18 +423,22 @@ namespace RestOn
 
         }
 
-        public void UseAuthentication(string authenticationType, string credentials)
+        public IRestRequest UseAuthentication(string authenticationType, string credentials)
         {
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(authenticationType, credentials);
+
+            return this;
         }
 
-        public void UseBasicAuthentication(string username, string password)
+        public IRestRequest UseBasicAuthentication(string username, string password)
         {
             string credentials = $"{username}:{password}";
 
             string credentials64 = Encoding.UTF8.EncodeBase64(credentials);
 
             UseAuthentication(RestAuthentication.BASIC, credentials64);
+            
+            return this;
         }
     }
 }

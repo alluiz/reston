@@ -6,7 +6,7 @@ namespace RestOn.Auth
 {
     public class OpenIdConnectCredentials
     {
-        public OpenIdConnectCredentials( string code, string redirect_uri)
+        public OpenIdConnectCredentials(string code, string redirect_uri)
         {
             Code = code;
             RedirectUri = redirect_uri;

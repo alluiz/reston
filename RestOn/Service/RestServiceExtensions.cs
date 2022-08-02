@@ -23,7 +23,7 @@ namespace RestOn.Service
 
         public static IServiceCollection AddTokenService(this IServiceCollection services, OAuth2Endpoints endpoints, IRestService restService)
         {
-            services.AddSingleton<IIdentityProviderService>(x => new IdentityProviderService(endpoints, restService));
+            services.AddSingleton<IIdentityProvider>(x => new IdentityService(endpoints, restService));
 
             return services;
         }

@@ -10,7 +10,7 @@ namespace RestOn.Auth
             this.TokenIntrospectionUri = new Uri(tokenIntrospectionUri);
         }
 
-        public Uri TokenUri { get; set; }
-        public Uri TokenIntrospectionUri { get; set; }
+        public Uri TokenUri { get; }
+        public Uri TokenIntrospectionUri { get; }
     }
 }

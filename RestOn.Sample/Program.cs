@@ -12,10 +12,10 @@ var endpoints = new OAuth2Endpoints(
     "https://samples.auth0.com/oauth/token",
     "https://samples.auth0.com/oauth/token");
 
-var idpService = new IdentityProviderService(endpoints, credentials, restService);
+var idpService = new IdentityService(endpoints, credentials, restService);
 
-var token =  await idpService.GetToken(new OpenIdConnectCredentials(
-    "aORBmYHW77lk_Ao-wdAsCoguoPlfqInw8CQSwcYsSJU_H", 
+var token =  await idpService.ExchangeForToken(new OpenIdConnectCredentials(
+    "vmWOSzBXFBNfDXg0TSjMc1JdnBptnAm2lfDkdT6UGeICz", 
     "https://openidconnect.net/callback"));
 
-Console.WriteLine(token.Access_Token);
+Console.WriteLine(token.ToString());

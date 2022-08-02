@@ -18,18 +18,7 @@ namespace RestOn.Service
         }
 
         private RestResponseEngine responseEngine;
-
-
-        /// <summary>
-        /// The scheme will be used in the requests. HTTP (default) or HTTPS
-        /// </summary>
-        public RestScheme Scheme { get; set; }
-
-        protected BaseService(RestScheme scheme)
-        {
-            this.Scheme = scheme;
-        }
-
+        
         protected RestResponseEngine ResponseEngine
         {
             get
@@ -39,6 +28,16 @@ namespace RestOn.Service
 
                 return responseEngine;
             }
+        }
+
+        /// <summary>
+        /// The scheme will be used in the requests. HTTP (default) or HTTPS
+        /// </summary>
+        public RestScheme Scheme { get; set; }
+
+        protected BaseService(RestScheme scheme)
+        {
+            this.Scheme = scheme;
         }
 
         protected void SetSchemeDefault(IRestRequest request)
