@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -9,11 +8,13 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
-using RestOn.Http;
 using RestOn.Auth;
+using RestOn.Exception;
+using RestOn.Http;
+using RestOn.Response;
+using RestOn.Utils;
 
-namespace RestOn
+namespace RestOn.Request
 {
     /// <summary>
     /// Class for make REST requests

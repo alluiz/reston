@@ -1,7 +1,6 @@
-using System;
-using System.Runtime.Serialization;
+using RestOn.Response;
 
-namespace RestOn
+namespace RestOn.Exception
 {
     public class RestAuthenticationException : RestException
     {
@@ -9,7 +8,7 @@ namespace RestOn
         {
         }
 
-        public RestAuthenticationException(string message, RestResponseMetadata response, Exception innerException) : base(message, response, innerException)
+        public RestAuthenticationException(string message, RestResponseMetadata response, System.Exception innerException) : base(message, response, innerException)
         {
         }
     }

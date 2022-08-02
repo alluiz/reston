@@ -1,4 +1,4 @@
-namespace RestOn
+namespace RestOn.Utils
 {
     public static class EncodingForBase64
     {

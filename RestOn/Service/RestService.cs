@@ -3,6 +3,7 @@ using Newtonsoft.Json.Serialization;
 using RestOn.Http;
 using System;
 using System.Net.Http;
+using RestOn.Request;
 
 namespace RestOn.Service
 {

@@ -1,16 +1,16 @@
 using System;
-using System.Runtime.Serialization;
+using RestOn.Response;
 
-namespace RestOn
+namespace RestOn.Exception
 {
-    public class RestException : Exception
+    public class RestException : System.Exception
     {
         public RestException(string message, RestResponseMetadata response) : base(message)
         {
             Response = response;
         }
 
-        public RestException(string message, RestResponseMetadata response, Exception innerException) : base(message, innerException)
+        public RestException(string message, RestResponseMetadata response, System.Exception innerException) : base(message, innerException)
         {
             Response = response;
         }

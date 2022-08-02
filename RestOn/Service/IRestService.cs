@@ -1,5 +1,6 @@
 using System;
 using RestOn.Http;
+using RestOn.Request;
 
 namespace RestOn.Service
 {

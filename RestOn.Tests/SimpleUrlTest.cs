@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using RestOn.Request;
+using RestOn.Response;
 using Xunit;
 
 namespace RestOn.Tests

@@ -1,4 +1,4 @@
-namespace RestOn
+namespace RestOn.Response
 {
     public class RestResponse<T>
     {

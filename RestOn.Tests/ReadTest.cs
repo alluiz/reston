@@ -8,6 +8,8 @@ using System.Linq;
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using RestOn.Http;
+using RestOn.Request;
+using RestOn.Response;
 
 namespace RestOn.Tests
 {
